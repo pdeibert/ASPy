@@ -4,3 +4,5 @@ src/aspy/antlr/
 !src/aspy/antlr/__init__.py
 !src/aspy/antlr/ASPCore.g4
 !src/aspy/antlr/generate.sh
+
+src/*.egg-info
