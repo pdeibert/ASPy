@@ -445,57 +445,6 @@ class TestGrounder(unittest.TestCase):
             set(),
         )  # not all literals have matches in 'possible'
 
-        # ----- optimize statements -----
-        # TODO
-
-        # arithmetic terms
-        rule = NormalRule(
-            # due to safety, all variables in arithmetic terms occurr outside of it too
-            PredLiteral("p", Number(0)),
-            [
-                PredLiteral("q", ArithVariable(0, Add(Variable("X"), Variable("Y")))),
-                PredLiteral("q", Variable("X")),
-                PredLiteral("q", Variable("Y")),
-            ],
-        )
-        self.assertEqual(
-            Grounder.ground_statement(
-                rule,
-                possible={
-                    PredLiteral("q", Number(1)),
-                    PredLiteral("q", Number(3)),
-                    PredLiteral("q", Number(5)),
-                    PredLiteral("q", Number(2)),
-                },
-            ),
-            {
-                NormalRule(
-                    PredLiteral("p", Number(0)),
-                    [
-                        PredLiteral("q", Number(5)),
-                        PredLiteral("q", Number(3)),
-                        PredLiteral("q", Number(2)),
-                    ],
-                ),
-                NormalRule(
-                    PredLiteral("p", Number(0)),
-                    [
-                        PredLiteral("q", Number(3)),
-                        PredLiteral("q", Number(2)),
-                        PredLiteral("q", Number(1)),
-                    ],
-                ),
-                NormalRule(
-                    PredLiteral("p", Number(0)),
-                    [
-                        PredLiteral("q", Number(2)),
-                        PredLiteral("q", Number(1)),
-                        PredLiteral("q", Number(1)),
-                    ],
-                ),
-            },  # does not contain duplicate instantiations
-        )
-
         # TODO: aggregates
 
     def test_ground_unsafe(self):

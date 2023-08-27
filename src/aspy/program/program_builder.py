@@ -23,10 +23,7 @@ from aspy.program.statements import (  # ChoiceFact,; DisjunctiveFact,; NormalFa
     ChoiceRule,
     Constraint,
     DisjunctiveRule,
-    MaximizeStatement,
-    MinimizeStatement,
     NormalRule,
-    OptimizeElement,
     Statement,
     WeakConstraint,
 )
@@ -44,7 +41,6 @@ from aspy.program.variable_table import VariableTable
 
 if TYPE_CHECKING:  # pragma: no cover
     from aspy.program.literals import BuiltinLiteral, Literal
-    from aspy.program.statements import OptimizeStatement
     from aspy.program.terms import Term
 
 
@@ -128,7 +124,6 @@ class ProgramBuilder(ASPCoreVisitor):
             statement           :   CONS body? DOT
                                 |   head (CONS body?)? DOT
                                 |   WCONS body? DOT SQUARE_OPEN weight_at_level SQUARE_CLOSE
-                                |   optimize DOT
 
         Args:
             ctx: `ASPCoreParser.StatementContext` to be visited.
@@ -181,9 +176,8 @@ class ProgramBuilder(ASPCoreVisitor):
                 statement = DisjunctiveRule(head, body)
             else:
                 statement = NormalRule(head[0], body)
-        # optimize DOT
         else:
-            statement = self.visitOptimize(ctx.children[0])
+            raise ValueError()
 
         return statement
 
@@ -494,103 +488,6 @@ class ProgramBuilder(ASPCoreVisitor):
         token = ctx.children[0].getSymbol()
 
         return AggrOp(token.text)
-
-    # Visit a parse tree produced by ASPCoreParser#optimize.
-    def visitOptimize(self, ctx: ASPCoreParser.OptimizeContext) -> "OptimizeStatement":
-        """Visits 'optimize'.
-
-        Handles the following rule(s):
-            optimize            :   optimize_function CURLY_OPEN optimize_elements? CURLY_CLOSE
-
-        Args:
-            ctx: `ASPCoreParser.OptimizeContext` to be visited.
-
-        Returns:
-            `OptimizeStatement` instance.
-        """  # noqa
-        optimization_function = self.visitOptimize_function(ctx.children[0])
-
-        # CURLY_OPEN optimize_elements CURLY_CLOSE
-        if len(ctx.children) > 3:
-            elements = self.visitOptimize_elements(ctx.children[2])
-        # CURLY_OPEN CURLY_CLOSE
-        else:
-            elements = tuple()
-
-        if optimization_function == "MINIMIZE":
-            return MinimizeStatement(elements)
-        else:
-            return MaximizeStatement(elements)
-
-    # Visit a parse tree produced by ASPCoreParser#optimize_elements.
-    def visitOptimize_elements(
-        self, ctx: ASPCoreParser.Optimize_elementsContext
-    ) -> Tuple[OptimizeElement, ...]:
-        """Visits 'optimize_elements'.
-
-        Handles the following rule(s):
-            optimize_elements   :   optimize_element (SEMICOLON optimize_elements)?
-
-        Args:
-            ctx: `ASPCoreParser.Optimize_elementsContext` to be visited.
-
-        Returns:
-            Tuple of `OptimizeElement` instances.
-        """
-        # optimize_element
-        elements = tuple([self.visitOptimize_element(ctx.children[0])])
-
-        # SEMICOLON optimize_elements
-        if len(ctx.children) > 1:
-            # append literals
-            elements += self.visitOptimize_elements(ctx.children[2])
-
-        return elements
-
-    # Visit a parse tree produced by ASPCoreParser#optimize_element.
-    def visitOptimize_element(
-        self, ctx: ASPCoreParser.Optimize_elementContext
-    ) -> OptimizeElement:
-        """Visits 'optimize_element'.
-
-        Handles the following rule(s):
-            optimize_element    :   weight_at_level (COLON naf_literals?)?
-
-        Args:
-            ctx: `ASPCoreParser.Optimize_elementContext` to be visited.
-
-        Returns:
-            `OptimizeStatement` instance.
-        """
-        # weight_at_level
-        weight_at_level = self.visitWeight_at_level(ctx.children[0])
-
-        # COLON naf_literals
-        if len(ctx.children) > 2:
-            literals = self.visitNaf_literals(ctx.children[2])
-        # COLON?
-        else:
-            literals = tuple()
-
-        return OptimizeElement(weight_at_level, literals)
-
-    # Visit a parse tree produced by ASPCoreParser#optimize_function.
-    def visitOptimize_function(
-        self, ctx: ASPCoreParser.Optimize_functionContext
-    ) -> str:
-        """Visits 'optimize_function'.
-
-        Handles the following rule(s):
-            optimize_function   :   MAXIMIZE
-                                |   MINIMIZE
-
-        Args:
-            ctx: `ASPCoreParser.Optimize_functionContext` to be visited.
-
-        Returns:
-            String representing the optimization function.
-        """
-        return ASPCoreParser.symbolicNames[ctx.getSymbol().type]
 
     # Visit a parse tree produced by ASPCoreParser#weight_at_level.
     def visitWeight_at_level(

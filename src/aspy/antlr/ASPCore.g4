@@ -1,6 +1,6 @@
-/* ASP-Core-2.03c
+/* Based on the latest ASP-Core 2 standard.
 
-For details see https://www.mat.unical.it/aspcomp2013/files/ASP-CORE-2.03c.pdf.
+For details see https://www.cambridge.org/core/journals/theory-and-practice-of-logic-programming/article/abs/aspcore2-input-language-format/292E52334010C1F62E4469ABCD66228E.
 */
 
 grammar ASPCore;
@@ -16,7 +16,6 @@ query               :   classical_literal QUERY_MARK ;
 statement           :   CONS body? DOT
                     |   head (CONS body?)? DOT
                     |   WCONS body? DOT SQUARE_OPEN weight_at_level SQUARE_CLOSE
-                    |   optimize DOT
                     ;
 
 head                :   disjunction
@@ -47,15 +46,6 @@ aggregate_function  :   COUNT
                     |   MIN
                     |   SUM
                     ;
-
-optimize            :   optimize_function CURLY_OPEN optimize_elements? CURLY_CLOSE ;
-
-optimize_elements   :   optimize_element (SEMICOLON optimize_elements)? ;
-
-optimize_element    :   weight_at_level (COLON naf_literals?)? ;
-
-optimize_function   :   MAXIMIZE
-                    |   MINIMIZE ;
 
 weight_at_level     :   term (AT term)? (COMMA terms)? ;
 
@@ -146,8 +136,6 @@ COUNT               :   '#count' ;
 MAX                 :   '#max' ;
 MIN                 :   '#min' ;
 SUM                 :   '#sum' ;
-MINIMIZE            :   '#minimize' ;
-MAXIMIZE            :   '#maximize' ;
 COMMENT             :   '%' ~[\r\n]* -> skip ;
 MULTI_LINE_COMMENT  :   '%*' .*? '*%' -> skip ;
 BLANK               :   [ \t\n]+ -> skip ;

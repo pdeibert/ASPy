@@ -24,7 +24,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class WeightAtLevel(Expr):
-    """Weight at level for weak constraints and optimize statements.
+    """Weight at level for weak constraints.
 
     Attributes:
         weight: `Term` instance.
