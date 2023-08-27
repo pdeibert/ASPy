@@ -17,6 +17,7 @@ from .builtin import (
     LessEqual,
     Unequal,
 )
+from .constants import FalseConstant, TrueConstant
 from .literal import Literal, LiteralCollection
 from .naf import Naf
 from .neg import Neg
