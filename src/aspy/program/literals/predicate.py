@@ -6,7 +6,7 @@ import aspy
 from aspy.program.safety_characterization import SafetyTriplet
 from aspy.program.substitution import Substitution
 from aspy.program.symbols import SYM_CONST_RE
-from aspy.program.terms import TermTuple
+from aspy.program.terms import Functional, TermTuple
 
 from .literal import Literal, LiteralCollection
 
@@ -246,3 +246,7 @@ class PredLiteral(Literal):
         return PredLiteral(
             self.name, *self.terms.replace_arith(var_table), neg=self.neg, naf=self.naf
         )
+
+    def as_term(self) -> Functional:
+        """TODO"""
+        return Functional(self.name, *self.terms)

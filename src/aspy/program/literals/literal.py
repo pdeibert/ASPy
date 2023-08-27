@@ -101,7 +101,7 @@ class Literal(Expr, ABC):
         raise NotImplementedError(
             f"Setting negation for literal of type {type(self)} not defined."
         )
-    
+
     def __abs__(self) -> "Literal":
         """TODO"""
         if self.naf:
