@@ -4,7 +4,7 @@
 
 # ASPY
 
-Answer Set Programming (ASP) in Python. Currently consists of a parser & grounder as well as a (very naive) solver.
+Answer Set Programming (ASP) in Python. Currently consists of a parser & grounder, but **no** solver. Note that the algorithms in this package are not meant to be competitive in any way, but for experimental purposes.
 
 Adheres to the latest [ASP-Core-2 standard](https://arxiv.org/abs/1911.04326), but does not support weak constraints as of yet.
 
@@ -28,7 +28,7 @@ Before using `ASPy` for the first time, the ANTLR parser files need to be genera
 
 The package provides a convenient `aspy` command line tool:
 ```
-aspy [ground|solve] -f <infile> [-o <outfile]
+aspy ground -f <infile> [-o <outfile]
 ```
 If no output file is specified, the grounded program or solutions will simply be output to the console (if successful).
 
