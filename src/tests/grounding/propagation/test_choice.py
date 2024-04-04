@@ -1,4 +1,4 @@
-import unittest
+from typing import Self
 
 import aspy
 from aspy.grounding.propagation import ChoicePropagator
@@ -25,11 +25,10 @@ from aspy.program.statements import (
 from aspy.program.terms import Number, TermTuple, Variable
 
 
-class TestChoicePropagator(unittest.TestCase):
-    def test_choice_propagator(self):
-
+class TestChoicePropagator:
+    def test_choice_propagator(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         elements_1 = (
             ChoiceElement(
@@ -133,8 +132,8 @@ class TestChoicePropagator(unittest.TestCase):
             ),
         }
         propagator = ChoicePropagator(choice_map)
-        self.assertEqual(propagator.choice_map, choice_map)
-        self.assertEqual(propagator.instance_map, dict())
+        assert propagator.choice_map == choice_map
+        assert propagator.instance_map == dict()
 
         # propagation
         eps_instances = {
@@ -229,13 +228,10 @@ class TestChoicePropagator(unittest.TestCase):
             eps_instances, eta_instances, domain, domain, set()
         )
 
-        self.assertEqual(
-            J_chi,
-            {
-                ChoicePlaceholder(1, TermTuple(Variable("X")), TermTuple(Number(0))),
-                ChoicePlaceholder(2, TermTuple(), TermTuple()),
-            },
-        )
+        assert J_chi == {
+            ChoicePlaceholder(1, TermTuple(Variable("X")), TermTuple(Number(0))),
+            ChoicePlaceholder(2, TermTuple(), TermTuple()),
+        }
 
         # assembling
         rule_1 = NormalRule(
@@ -248,52 +244,44 @@ class TestChoicePropagator(unittest.TestCase):
         )
         rules = propagator.assemble({rule_1, rule_2}, J_chi)
 
-        self.assertEqual(len(rules), 2)
-        self.assertEqual(
-            set(rules),
-            {
-                ChoiceRule(
-                    Choice(
-                        (
-                            ChoiceElement(
-                                PredLiteral("q", Number(0)),
-                                LiteralCollection(PredLiteral("p", Number(0))),
-                            ),
-                            ChoiceElement(
-                                PredLiteral("p", Number(1)),
-                                LiteralCollection(PredLiteral("q", Number(1))),
-                            ),
-                            ChoiceElement(
-                                PredLiteral("p", Number(0)),
-                                LiteralCollection(PredLiteral("q", Number(0))),
-                            ),
-                        ),
-                        Guard(RelOp.GREATER_OR_EQ, Number(0), True),
-                    ),
+        assert len(rules) == 2
+        assert set(rules) == {
+            ChoiceRule(
+                Choice(
                     (
-                        PredLiteral("q", Number(0)),
-                        Equal(Number(0), Number(0)),
-                    ),
-                ),
-                ChoiceRule(
-                    Choice(
-                        (
-                            ChoiceElement(
-                                PredLiteral("p", Number(0)),
-                                LiteralCollection(PredLiteral("q", Number(0))),
-                            ),
+                        ChoiceElement(
+                            PredLiteral("q", Number(0)),
+                            LiteralCollection(PredLiteral("p", Number(0))),
                         ),
-                        Guard(RelOp.LESS_OR_EQ, Number(0), False),
+                        ChoiceElement(
+                            PredLiteral("p", Number(1)),
+                            LiteralCollection(PredLiteral("q", Number(1))),
+                        ),
+                        ChoiceElement(
+                            PredLiteral("p", Number(0)),
+                            LiteralCollection(PredLiteral("q", Number(0))),
+                        ),
                     ),
-                    (
-                        PredLiteral("q", Number(0)),
-                        Equal(Number(0), Number(0)),
-                    ),
+                    Guard(RelOp.GREATER_OR_EQ, Number(0), True),
                 ),
-            },
-        )
-        # """
-
-
-if __name__ == "__main__":  # pragma: no cover
-    unittest.main()
+                (
+                    PredLiteral("q", Number(0)),
+                    Equal(Number(0), Number(0)),
+                ),
+            ),
+            ChoiceRule(
+                Choice(
+                    (
+                        ChoiceElement(
+                            PredLiteral("p", Number(0)),
+                            LiteralCollection(PredLiteral("q", Number(0))),
+                        ),
+                    ),
+                    Guard(RelOp.LESS_OR_EQ, Number(0), False),
+                ),
+                (
+                    PredLiteral("q", Number(0)),
+                    Equal(Number(0), Number(0)),
+                ),
+            ),
+        }

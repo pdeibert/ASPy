@@ -1,5 +1,6 @@
-import unittest
-from typing import Set
+from typing import Self, Set
+
+import pytest  # type: ignore
 
 import aspy
 from aspy.program.literals import (
@@ -31,23 +32,22 @@ from aspy.program.variable_table import VariableTable
 
 
 class DummyBody:  # pragma: no cover
-    def __init__(self, vars: Set["Variable"]) -> None:
+    def __init__(self: Self, vars: Set["Variable"]) -> None:
         self.vars = vars
 
-    def global_vars(self) -> Set["Variable"]:
+    def global_vars(self: Self) -> Set["Variable"]:
         return self.vars
 
 
 class DummyRule:  # pragma: no cover
-    def __init__(self, vars: Set["Variable"]) -> None:
+    def __init__(self: Self, vars: Set["Variable"]) -> None:
         self.body = DummyBody(vars)
 
 
-class TestChoice(unittest.TestCase):
-    def test_choice_element(self):
-
+class TestChoice:
+    def test_choice_element(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         element = ChoiceElement(
             PredLiteral("p", String("str")),
@@ -57,10 +57,26 @@ class TestChoice(unittest.TestCase):
             ),
         )
         # string representation
-        self.assertEqual(str(element), 'p("str"):p(0),not q(Y)')
+        assert str(element) == 'p("str"):p(0),not q(Y)'
         # equality
-        self.assertEqual(
-            element,
+        assert element == ChoiceElement(
+            PredLiteral("p", String("str")),
+            LiteralCollection(
+                PredLiteral("p", Number(0)),
+                Naf(PredLiteral("q", Variable("Y"))),
+            ),
+        )
+        # head
+        assert element.head == LiteralCollection(
+            PredLiteral("p", String("str")),
+        )
+        # body
+        assert element.body == LiteralCollection(
+            PredLiteral("p", Number(0)),
+            Naf(PredLiteral("q", Variable("Y"))),
+        )
+        # hashing
+        assert hash(element) == hash(
             ChoiceElement(
                 PredLiteral("p", String("str")),
                 LiteralCollection(
@@ -69,52 +85,20 @@ class TestChoice(unittest.TestCase):
                 ),
             ),
         )
-        # head
-        self.assertEqual(
-            element.head,
-            LiteralCollection(
-                PredLiteral("p", String("str")),
-            ),
-        )
-        # body
-        self.assertEqual(
-            element.body,
-            LiteralCollection(
-                PredLiteral("p", Number(0)),
-                Naf(PredLiteral("q", Variable("Y"))),
-            ),
-        )
-        # hashing
-        self.assertEqual(
-            hash(element),
-            hash(
-                ChoiceElement(
-                    PredLiteral("p", String("str")),
-                    LiteralCollection(
-                        PredLiteral("p", Number(0)),
-                        Naf(PredLiteral("q", Variable("Y"))),
-                    ),
-                ),
-            ),
-        )
         # ground
-        self.assertFalse(element.ground)
+        assert not element.ground
         # positive/negative literal occurrences
-        self.assertEqual(
-            element.pos_occ(),
-            LiteralCollection(
-                PredLiteral("p", String("str")), PredLiteral("p", Number(0))
-            ),
+        assert element.pos_occ() == LiteralCollection(
+            PredLiteral("p", String("str")), PredLiteral("p", Number(0))
         )
-        self.assertEqual(
-            element.neg_occ(), LiteralCollection(PredLiteral("q", Variable("Y")))
-        )
+        assert element.neg_occ() == LiteralCollection(PredLiteral("q", Variable("Y")))
         # vars
-        self.assertTrue(element.vars() == element.global_vars() == {Variable("Y")})
+        assert element.vars() == element.global_vars() == {Variable("Y")}
         # safety
-        self.assertRaises(Exception, element.safety)
+        with pytest.raises(Exception):
+            element.safety()
         # replace arithmetic terms
-        self.assertEqual(element.replace_arith(VariableTable()), element)
+        assert element.replace_arith(VariableTable()) == element
         element = ChoiceElement(
             PredLiteral("p", String("str")),
             LiteralCollection(
@@ -122,36 +106,30 @@ class TestChoice(unittest.TestCase):
                 Naf(PredLiteral("q", Minus(Variable("Y")))),
             ),
         )
-        self.assertEqual(
-            element.replace_arith(VariableTable()),
-            ChoiceElement(
-                PredLiteral("p", String("str")),
-                LiteralCollection(
-                    PredLiteral("p", Number(0)),
-                    Naf(PredLiteral("q", ArithVariable(0, Minus(Variable("Y"))))),
-                ),
+        assert element.replace_arith(VariableTable()) == ChoiceElement(
+            PredLiteral("p", String("str")),
+            LiteralCollection(
+                PredLiteral("p", Number(0)),
+                Naf(PredLiteral("q", ArithVariable(0, Minus(Variable("Y"))))),
             ),
         )
         # substitute
-        self.assertEqual(
-            element.substitute(
-                Substitution({Variable("Y"): Number(1), Number(5): String("f")})
-            ),  # NOTE: substitution is invalid
-            ChoiceElement(
-                PredLiteral("p", String("str")),
-                LiteralCollection(
-                    PredLiteral("p", Number(0)),
-                    Naf(PredLiteral("q", Number(-1))),
-                ),
+        assert element.substitute(
+            Substitution({Variable("Y"): Number(1), Number(5): String("f")})
+        ) == ChoiceElement(
+            PredLiteral("p", String("str")),
+            LiteralCollection(
+                PredLiteral("p", Number(0)),
+                Naf(PredLiteral("q", Number(-1))),
             ),
-        )
+        )  # NOTE: substitution is invalid
         # match
-        self.assertRaises(Exception, element.match, element)
+        with pytest.raises(Exception):
+            element.match(element)
 
-    def test_choice(self):
-
+    def test_choice(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         ground_elements = (
             ChoiceElement(
@@ -168,32 +146,24 @@ class TestChoice(unittest.TestCase):
 
         # no guards
         ground_choice = Choice(ground_elements, guards=())
-        self.assertEqual(ground_choice.lguard, None)
-        self.assertEqual(ground_choice.rguard, None)
-        self.assertEqual(ground_choice.guards, (None, None))
-        self.assertEqual(str(ground_choice), '{p(5):p("str"),not q;p(-3):not p("str")}')
+        assert ground_choice.lguard is None
+        assert ground_choice.rguard is None
+        assert ground_choice.guards == (None, None)
+        assert str(ground_choice) == '{p(5):p("str"),not q;p(-3):not p("str")}'
         # left guard only
         ground_choice = Choice(
             ground_elements, guards=Guard(RelOp.LESS, Number(3), False)
         )
-        self.assertEqual(ground_choice.lguard, Guard(RelOp.LESS, Number(3), False))
-        self.assertEqual(ground_choice.rguard, None)
-        self.assertEqual(
-            ground_choice.guards, (Guard(RelOp.LESS, Number(3), False), None)
-        )
-        self.assertEqual(
-            str(ground_choice), '3 < {p(5):p("str"),not q;p(-3):not p("str")}'
-        )
+        assert ground_choice.lguard == Guard(RelOp.LESS, Number(3), False)
+        assert ground_choice.rguard is None
+        assert ground_choice.guards == (Guard(RelOp.LESS, Number(3), False), None)
+        assert str(ground_choice) == '3 < {p(5):p("str"),not q;p(-3):not p("str")}'
         # right guard only
         ground_choice = Choice(ground_elements, Guard(RelOp.LESS, Number(3), True))
-        self.assertEqual(ground_choice.lguard, None)
-        self.assertEqual(ground_choice.rguard, Guard(RelOp.LESS, Number(3), True))
-        self.assertEqual(
-            ground_choice.guards, (None, Guard(RelOp.LESS, Number(3), True))
-        )
-        self.assertEqual(
-            str(ground_choice), '{p(5):p("str"),not q;p(-3):not p("str")} < 3'
-        )
+        assert ground_choice.lguard is None
+        assert ground_choice.rguard == Guard(RelOp.LESS, Number(3), True)
+        assert ground_choice.guards == (None, Guard(RelOp.LESS, Number(3), True))
+        assert str(ground_choice) == '{p(5):p("str"),not q;p(-3):not p("str")} < 3'
         # both guards
         ground_choice = Choice(
             ground_elements,
@@ -202,15 +172,13 @@ class TestChoice(unittest.TestCase):
                 Guard(RelOp.LESS, Number(3), True),
             ),
         )
-        self.assertEqual(ground_choice.lguard, Guard(RelOp.LESS, Number(3), False))
-        self.assertEqual(ground_choice.rguard, Guard(RelOp.LESS, Number(3), True))
-        self.assertEqual(
-            ground_choice.guards,
-            (Guard(RelOp.LESS, Number(3), False), Guard(RelOp.LESS, Number(3), True)),
+        assert ground_choice.lguard == Guard(RelOp.LESS, Number(3), False)
+        assert ground_choice.rguard == Guard(RelOp.LESS, Number(3), True)
+        assert ground_choice.guards == (
+            Guard(RelOp.LESS, Number(3), False),
+            Guard(RelOp.LESS, Number(3), True),
         )
-        self.assertEqual(
-            str(ground_choice), '3 < {p(5):p("str"),not q;p(-3):not p("str")} < 3'
-        )
+        assert str(ground_choice) == '3 < {p(5):p("str"),not q;p(-3):not p("str")} < 3'
 
         var_elements = (
             ChoiceElement(
@@ -229,189 +197,142 @@ class TestChoice(unittest.TestCase):
         )
 
         # equality
-        self.assertEqual(
-            ground_choice,
+        assert ground_choice == Choice(
+            ground_elements,
+            guards=(
+                Guard(RelOp.LESS, Number(3), False),
+                Guard(RelOp.LESS, Number(3), True),
+            ),
+        )
+        # hashing
+        assert hash(ground_choice) == hash(
             Choice(
                 ground_elements,
                 guards=(
                     Guard(RelOp.LESS, Number(3), False),
                     Guard(RelOp.LESS, Number(3), True),
                 ),
-            ),
-        )
-        # hashing
-        self.assertEqual(
-            hash(ground_choice),
-            hash(
-                Choice(
-                    ground_elements,
-                    guards=(
-                        Guard(RelOp.LESS, Number(3), False),
-                        Guard(RelOp.LESS, Number(3), True),
-                    ),
-                )
-            ),
+            )
         )
         # head
-        self.assertEqual(
-            ground_choice.head,
-            LiteralCollection(
-                PredLiteral("p", Number(5)),
-                PredLiteral("p", Number(-3)),
-            ),
+        assert ground_choice.head == LiteralCollection(
+            PredLiteral("p", Number(5)),
+            PredLiteral("p", Number(-3)),
         )
         # body
-        self.assertEqual(
-            ground_choice.body,
-            LiteralCollection(
-                PredLiteral("p", String("str")),
-                Naf(PredLiteral("q")),
-                Naf(PredLiteral("p", String("str"))),
-            ),
+        assert ground_choice.body == LiteralCollection(
+            PredLiteral("p", String("str")),
+            Naf(PredLiteral("q")),
+            Naf(PredLiteral("p", String("str"))),
         )
         # ground
-        self.assertTrue(ground_choice.ground)
-        self.assertFalse(var_choice.ground)
+        assert ground_choice.ground
+        assert not var_choice.ground
         # variables
-        self.assertTrue(
+        assert (
             ground_choice.invars()
             == ground_choice.outvars()
             == ground_choice.vars()
             == ground_choice.global_vars(DummyRule({Variable("Y")}))
             == set()
         )
-        self.assertEqual(var_choice.invars(), {Variable("X")})
-        self.assertEqual(var_choice.outvars(), {Variable("Y")})
-        self.assertEqual(var_choice.vars(), {Variable("X"), Variable("Y")})
-        self.assertEqual(
-            var_choice.global_vars(DummyRule({Variable("Y")})), {Variable("Y")}
-        )
-        # self.assertEqual(var_choice.global_vars(), {Variable("X"), Variable("Y")})
+        assert var_choice.invars() == {Variable("X")}
+        assert var_choice.outvars() == {Variable("Y")}
+        assert var_choice.vars() == {Variable("X"), Variable("Y")}
+        assert var_choice.global_vars(DummyRule({Variable("Y")})) == {Variable("Y")}
+        # assert Eq var_choice.global_vars(), {Variable("X"), Variable("Y")})
         # positive/negative literal occurrences
-        self.assertEqual(
-            var_choice.pos_occ(),
-            LiteralCollection(
-                PredLiteral("p", Number(5)),
-                PredLiteral("p", Number(-3)),
-                PredLiteral("p", Variable("X")),
-            ),
+        assert var_choice.pos_occ() == LiteralCollection(
+            PredLiteral("p", Number(5)),
+            PredLiteral("p", Number(-3)),
+            PredLiteral("p", Variable("X")),
         )
-        self.assertEqual(
-            var_choice.neg_occ(),
-            LiteralCollection(PredLiteral("p", String("str")), PredLiteral("q")),
+        assert var_choice.neg_occ() == LiteralCollection(
+            PredLiteral("p", String("str")), PredLiteral("q")
         )
         # evaluation
-        self.assertTrue(
-            Choice.eval(
-                ground_elements,
-                # satisfiable lower bound
-                guards=(Guard(RelOp.LESS, Number(1), False), None),
-            )
+        assert Choice.eval(
+            ground_elements,
+            # satisfiable lower bound
+            guards=(Guard(RelOp.LESS, Number(1), False), None),
         )
-        self.assertFalse(
-            Choice.eval(
-                ground_elements,
-                # unsatisfiable lower bound
-                guards=(Guard(RelOp.LESS, Number(2), False), None),
-            )
+        assert not Choice.eval(
+            ground_elements,
+            # unsatisfiable lower bound
+            guards=(Guard(RelOp.LESS, Number(2), False), None),
         )
-        self.assertTrue(
-            Choice.eval(
-                ground_elements,
-                # satisfiable lower bound
-                guards=(Guard(RelOp.LESS_OR_EQ, Number(2), False), None),
-            )
+        assert Choice.eval(
+            ground_elements,
+            # satisfiable lower bound
+            guards=(Guard(RelOp.LESS_OR_EQ, Number(2), False), None),
         )
-        self.assertFalse(
-            Choice.eval(
-                ground_elements,
-                # unsatisfiable lower bound
-                guards=(Guard(RelOp.LESS_OR_EQ, Number(3), False), None),
-            )
+        assert not Choice.eval(
+            ground_elements,
+            # unsatisfiable lower bound
+            guards=(Guard(RelOp.LESS_OR_EQ, Number(3), False), None),
         )
-        self.assertTrue(
-            Choice.eval(
-                ground_elements,
-                # satisfiable upper bound
-                guards=(Guard(RelOp.GREATER, Number(1), False), None),
-            )
+        assert Choice.eval(
+            ground_elements,
+            # satisfiable upper bound
+            guards=(Guard(RelOp.GREATER, Number(1), False), None),
         )
-        self.assertFalse(
-            Choice.eval(
-                ground_elements,
-                # unsatisfiable upper bound
-                guards=(Guard(RelOp.GREATER, Number(0), False), None),
-            )
+        assert not Choice.eval(
+            ground_elements,
+            # unsatisfiable upper bound
+            guards=(Guard(RelOp.GREATER, Number(0), False), None),
         )
-        self.assertTrue(
-            Choice.eval(
-                ground_elements,
-                # satisfiable upper bound
-                guards=(Guard(RelOp.GREATER_OR_EQ, Number(0), False), None),
-            )
+        assert Choice.eval(
+            ground_elements,
+            # satisfiable upper bound
+            guards=(Guard(RelOp.GREATER_OR_EQ, Number(0), False), None),
         )
-        self.assertFalse(
-            Choice.eval(
-                ground_elements,
-                # unsatisfiable upper bound
-                guards=(Guard(RelOp.GREATER_OR_EQ, Number(-1), False), None),
-            )
+        assert not Choice.eval(
+            ground_elements,
+            # unsatisfiable upper bound
+            guards=(Guard(RelOp.GREATER_OR_EQ, Number(-1), False), None),
         )
-        self.assertTrue(
-            Choice.eval(
-                ground_elements,
-                # satisfiable equality bound
-                guards=(Guard(RelOp.EQUAL, Number(2), False), None),
-            )
+        assert Choice.eval(
+            ground_elements,
+            # satisfiable equality bound
+            guards=(Guard(RelOp.EQUAL, Number(2), False), None),
         )
-        self.assertFalse(
-            Choice.eval(
-                ground_elements,
-                # unsatisfiable equality bound
-                guards=(Guard(RelOp.EQUAL, Number(-1), False), None),
-            )
+        assert not Choice.eval(
+            ground_elements,
+            # unsatisfiable equality bound
+            guards=(Guard(RelOp.EQUAL, Number(-1), False), None),
         )
-        self.assertFalse(
-            Choice.eval(
-                ground_elements,
-                # unsatisfiable equality bound
-                guards=(Guard(RelOp.EQUAL, Number(3), False), None),
-            )
+        assert not Choice.eval(
+            ground_elements,
+            # unsatisfiable equality bound
+            guards=(Guard(RelOp.EQUAL, Number(3), False), None),
         )
-        self.assertTrue(
-            Choice.eval(
-                # no elements
-                tuple(),
-                # satisfiable unequality bound
-                guards=(Guard(RelOp.UNEQUAL, Number(-1), False), None),
-            )
+        assert Choice.eval(
+            # no elements
+            tuple(),
+            # satisfiable unequality bound
+            guards=(Guard(RelOp.UNEQUAL, Number(-1), False), None),
         )
-        self.assertFalse(
-            Choice.eval(
-                # no elements
-                tuple(),
-                # unsatisfiable unequality bound
-                guards=(Guard(RelOp.UNEQUAL, Number(0), False), None),
-            )
+        assert not Choice.eval(
+            # no elements
+            tuple(),
+            # unsatisfiable unequality bound
+            guards=(Guard(RelOp.UNEQUAL, Number(0), False), None),
         )
-        self.assertTrue(
-            Choice.eval(
-                ground_elements,
-                # satisfiable unequality bound
-                guards=(Guard(RelOp.UNEQUAL, Number(-1), False), None),
-            )
+        assert Choice.eval(
+            ground_elements,
+            # satisfiable unequality bound
+            guards=(Guard(RelOp.UNEQUAL, Number(-1), False), None),
         )
-        self.assertTrue(
-            Choice.eval(
-                ground_elements,
-                # satisfiable unequality bound
-                guards=(Guard(RelOp.UNEQUAL, Number(0), False), None),
-            )
+        assert Choice.eval(
+            ground_elements,
+            # satisfiable unequality bound
+            guards=(Guard(RelOp.UNEQUAL, Number(0), False), None),
         )
         # TODO: test evaluation with two guards
 
         # safety characterization
-        self.assertRaises(Exception, var_choice.safety)
+        with pytest.raises(Exception):
+            var_choice.safety()
         # replace arithmetic terms
         arith_elements = (
             ChoiceElement(
@@ -426,49 +347,42 @@ class TestChoice(unittest.TestCase):
             arith_elements,
             Guard(RelOp.EQUAL, Minus(Variable("X")), True),
         )
-        self.assertEqual(
-            choice.replace_arith(VariableTable()),
-            Choice(
-                (
-                    ChoiceElement(
-                        PredLiteral("p", Number(5)),
-                        LiteralCollection(
-                            PredLiteral("p", ArithVariable(0, Minus(Variable("X")))),
-                            Naf(PredLiteral("q")),
-                        ),
+        assert choice.replace_arith(VariableTable()) == Choice(
+            (
+                ChoiceElement(
+                    PredLiteral("p", Number(5)),
+                    LiteralCollection(
+                        PredLiteral("p", ArithVariable(0, Minus(Variable("X")))),
+                        Naf(PredLiteral("q")),
                     ),
                 ),
-                Guard(RelOp.EQUAL, ArithVariable(1, Minus(Variable("X"))), True),
             ),
+            Guard(RelOp.EQUAL, ArithVariable(1, Minus(Variable("X"))), True),
         )
 
         # substitute
         var_choice = Choice(var_elements, Guard(RelOp.LESS, Variable("X"), False))
-        self.assertEqual(
-            var_choice.substitute(
-                Substitution({Variable("X"): Number(1), Number(-3): String("f")})
-            ),  # NOTE: substitution is invalid
-            Choice(
-                (
-                    ChoiceElement(
-                        PredLiteral("p", Number(5)),
-                        LiteralCollection(
-                            PredLiteral("p", Number(1)), Naf(PredLiteral("q"))
-                        ),
-                    ),
-                    ChoiceElement(
-                        PredLiteral("p", Number(-3)),
-                        LiteralCollection(Naf(PredLiteral("p", String("str")))),
+        assert var_choice.substitute(
+            Substitution({Variable("X"): Number(1), Number(-3): String("f")})
+        ) == Choice(
+            (
+                ChoiceElement(
+                    PredLiteral("p", Number(5)),
+                    LiteralCollection(
+                        PredLiteral("p", Number(1)), Naf(PredLiteral("q"))
                     ),
                 ),
-                guards=Guard(RelOp.LESS, Number(1), False),
+                ChoiceElement(
+                    PredLiteral("p", Number(-3)),
+                    LiteralCollection(Naf(PredLiteral("p", String("str")))),
+                ),
             ),
-        )
+            guards=Guard(RelOp.LESS, Number(1), False),
+        )  # NOTE: substitution is invalid
 
-    def test_choice_fact(self):
-
+    def test_choice_fact(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         ground_elements = (
             ChoiceElement(
@@ -506,59 +420,46 @@ class TestChoice(unittest.TestCase):
         var_rule = ChoiceRule(var_choice)
 
         # string representation
-        self.assertEqual(
-            str(ground_rule), '3 < {p(5):p("str"),not q;p(-3):not p("str")}.'
-        )
-        self.assertEqual(str(var_rule), 'Y < {p(5):p(X),not q;p(-3):not p("str")}.')
+        assert str(ground_rule) == '3 < {p(5):p("str"),not q;p(-3):not p("str")}.'
+        assert str(var_rule) == 'Y < {p(5):p(X),not q;p(-3):not p("str")}.'
         # equality
-        self.assertEqual(
-            ground_rule.choice,  # TODO: head
-            Choice(
-                ground_elements,
-                guards=Guard(RelOp.LESS, Number(3), False),
-            ),
-        )
-        self.assertEqual(ground_rule.body, LiteralCollection())
-        self.assertEqual(
-            var_rule.choice,  # TODO: head
-            Choice(var_elements, guards=Guard(RelOp.LESS, Variable("Y"), False)),
-        )
-        self.assertEqual(var_rule.body, LiteralCollection())
+        assert ground_rule.choice == Choice(
+            ground_elements,
+            guards=Guard(RelOp.LESS, Number(3), False),
+        )  # TODO: head
+        assert ground_rule.body == LiteralCollection()
+        assert var_rule.choice == Choice(
+            var_elements, guards=Guard(RelOp.LESS, Variable("Y"), False)
+        )  # TODO: head
+        assert var_rule.body == LiteralCollection()
         # hashing
-        self.assertEqual(
-            hash(ground_rule),
-            hash(
-                ChoiceRule(
-                    Choice(
-                        ground_elements,
-                        guards=Guard(RelOp.LESS, Number(3), False),
-                    ),
-                )
-            ),
+        assert hash(ground_rule) == hash(
+            ChoiceRule(
+                Choice(
+                    ground_elements,
+                    guards=Guard(RelOp.LESS, Number(3), False),
+                ),
+            )
         )
-        self.assertEqual(
-            hash(var_rule),
-            hash(
-                ChoiceRule(
-                    Choice(
-                        var_elements, guards=Guard(RelOp.LESS, Variable("Y"), False)
-                    ),
-                )
-            ),
+        assert hash(var_rule) == hash(
+            ChoiceRule(
+                Choice(var_elements, guards=Guard(RelOp.LESS, Variable("Y"), False)),
+            )
         )
         # ground
-        self.assertTrue(ground_rule.ground)
-        self.assertFalse(var_rule.ground)
+        assert ground_rule.ground
+        assert not var_rule.ground
         # safety
-        self.assertTrue(ground_rule.safe)
-        self.assertFalse(var_rule.safe)
+        assert ground_rule.safe
+        assert not var_rule.safe
         # variables
-        self.assertTrue(ground_rule.vars() == ground_rule.global_vars() == set())
-        self.assertEqual(var_rule.vars(), {Variable("X"), Variable("Y")})
-        # self.assertTrue(
+        assert ground_rule.vars() == ground_rule.global_vars() == set()
+        assert var_rule.vars() == {Variable("X"), Variable("Y")}
+        # TODO:
+        # assert
         #    var_rule.vars() == var_rule.global_vars() == {Variable("X"), Variable("Y")}
         # )
-        self.assertEqual(var_rule.global_vars(), {Variable("Y")})
+        assert var_rule.global_vars() == {Variable("Y")}
         # replace arithmetic terms
         arith_elements = (
             ChoiceElement(
@@ -575,57 +476,49 @@ class TestChoice(unittest.TestCase):
                 Guard(RelOp.EQUAL, Minus(Variable("X")), True),
             ),
         )
-        self.assertEqual(
-            rule.replace_arith(),
-            ChoiceRule(
-                Choice(
-                    (
-                        ChoiceElement(
-                            PredLiteral("p", Number(5)),
-                            LiteralCollection(
-                                PredLiteral(
-                                    "p", ArithVariable(0, Minus(Variable("X")))
-                                ),
-                                Naf(PredLiteral("q")),
-                            ),
+        assert rule.replace_arith() == ChoiceRule(
+            Choice(
+                (
+                    ChoiceElement(
+                        PredLiteral("p", Number(5)),
+                        LiteralCollection(
+                            PredLiteral("p", ArithVariable(0, Minus(Variable("X")))),
+                            Naf(PredLiteral("q")),
                         ),
                     ),
-                    Guard(RelOp.EQUAL, ArithVariable(1, Minus(Variable("X"))), True),
                 ),
+                Guard(RelOp.EQUAL, ArithVariable(1, Minus(Variable("X"))), True),
             ),
         )
 
         # substitution
         rule = ChoiceRule(Choice(var_elements, Guard(RelOp.LESS, Variable("X"), False)))
-        self.assertEqual(
-            rule.substitute(
-                Substitution({Variable("X"): Number(1), Number(-3): String("f")})
-            ),  # NOTE: substitution is invalid
-            ChoiceRule(
-                Choice(
-                    (
-                        ChoiceElement(
-                            PredLiteral("p", Number(5)),
-                            LiteralCollection(
-                                PredLiteral("p", Number(1)),
-                                Naf(PredLiteral("q")),
-                            ),
-                        ),
-                        ChoiceElement(
-                            PredLiteral("p", Number(-3)),
-                            LiteralCollection(Naf(PredLiteral("p", String("str")))),
+        assert rule.substitute(
+            Substitution({Variable("X"): Number(1), Number(-3): String("f")})
+        ) == ChoiceRule(
+            Choice(
+                (
+                    ChoiceElement(
+                        PredLiteral("p", Number(5)),
+                        LiteralCollection(
+                            PredLiteral("p", Number(1)),
+                            Naf(PredLiteral("q")),
                         ),
                     ),
-                    guards=Guard(RelOp.LESS, Number(1), False),
+                    ChoiceElement(
+                        PredLiteral("p", Number(-3)),
+                        LiteralCollection(Naf(PredLiteral("p", String("str")))),
+                    ),
                 ),
+                guards=Guard(RelOp.LESS, Number(1), False),
             ),
         )  # NOTE: substitution is invalid
 
         # rewrite aggregates
-        self.assertEqual(rule, rule.rewrite_aggregates(0, dict()))
+        assert rule == rule.rewrite_aggregates(0, dict())
 
         # assembling
-        self.assertEqual(rule, rule.assemble_aggregates(dict()))
+        assert rule == rule.assemble_aggregates(dict())
 
         # rewrite choice
         elements = (
@@ -652,85 +545,63 @@ class TestChoice(unittest.TestCase):
             ),
         )
         choice_map = dict()
-        self.assertEqual(rule.rewrite_choices(1, choice_map), target_rule)
-        self.assertEqual(len(choice_map), 1)
+        assert rule.rewrite_choices(1, choice_map) == target_rule
+        assert len(choice_map) == 1
 
         choice, chi_literal, eps_rule, eta_rules = choice_map[1]
-        self.assertEqual(choice, rule.head)
+        assert choice == rule.head
 
-        self.assertEqual(chi_literal, target_rule.atom)
-        self.assertEqual(
-            eps_rule,
-            ChoiceBaseRule(
-                ChoiceBaseLiteral(
-                    1,
-                    TermTuple(),
-                    TermTuple(),
-                ),
-                Guard(RelOp.GREATER_OR_EQ, Number(-1), False),
-                None,
-                LiteralCollection(
-                    GreaterEqual(Number(-1), Number(0)),
-                ),
+        assert chi_literal == target_rule.atom
+        assert eps_rule == ChoiceBaseRule(
+            ChoiceBaseLiteral(
+                1,
+                TermTuple(),
+                TermTuple(),
+            ),
+            Guard(RelOp.GREATER_OR_EQ, Number(-1), False),
+            None,
+            LiteralCollection(
+                GreaterEqual(Number(-1), Number(0)),
             ),
         )
 
-        self.assertEqual(len(eta_rules), 2)
+        assert len(eta_rules) == 2
         # """
-        self.assertEqual(
-            eta_rules[0],
-            ChoiceElemRule(
-                ChoiceElemLiteral(
-                    1,
-                    0,
-                    TermTuple(Variable("X")),
-                    TermTuple(),
-                    TermTuple(Variable("X")),
-                ),
-                elements[0],
-                LiteralCollection(
-                    PredLiteral("q", Variable("X")),
-                ),
+        assert eta_rules[0] == ChoiceElemRule(
+            ChoiceElemLiteral(
+                1,
+                0,
+                TermTuple(Variable("X")),
+                TermTuple(),
+                TermTuple(Variable("X")),
+            ),
+            elements[0],
+            LiteralCollection(
+                PredLiteral("q", Variable("X")),
             ),
         )
-        self.assertEqual(
-            eta_rules[1],
-            ChoiceElemRule(
-                ChoiceElemLiteral(
-                    1,
-                    1,
-                    TermTuple(),
-                    TermTuple(),
-                    TermTuple(),
-                ),
-                elements[1],
-                LiteralCollection(
-                    PredLiteral("p", Number(0)),
-                ),
+        assert eta_rules[1] == ChoiceElemRule(
+            ChoiceElemLiteral(
+                1,
+                1,
+                TermTuple(),
+                TermTuple(),
+                TermTuple(),
+            ),
+            elements[1],
+            LiteralCollection(
+                PredLiteral("p", Number(0)),
             ),
         )
 
         # assembling choice
-        self.assertEqual(
-            target_rule.assemble_choices(
-                {
-                    ChoicePlaceholder(1, TermTuple(), TermTuple(),): Choice(
-                        (
-                            ChoiceElement(
-                                PredLiteral("p", Number(0)),
-                                LiteralCollection(PredLiteral("q", Number(0))),
-                            ),
-                            ChoiceElement(
-                                PredLiteral("p", Number(1)),
-                                LiteralCollection(PredLiteral("p", Number(0))),
-                            ),
-                        ),
-                        Guard(RelOp.GREATER_OR_EQ, Number(-1), False),
-                    ),
-                },
-            ),
-            ChoiceRule(
-                Choice(
+        assert target_rule.assemble_choices(
+            {
+                ChoicePlaceholder(
+                    1,
+                    TermTuple(),
+                    TermTuple(),
+                ): Choice(
                     (
                         ChoiceElement(
                             PredLiteral("p", Number(0)),
@@ -743,20 +614,33 @@ class TestChoice(unittest.TestCase):
                     ),
                     Guard(RelOp.GREATER_OR_EQ, Number(-1), False),
                 ),
+            },
+        ) == ChoiceRule(
+            Choice(
+                (
+                    ChoiceElement(
+                        PredLiteral("p", Number(0)),
+                        LiteralCollection(PredLiteral("q", Number(0))),
+                    ),
+                    ChoiceElement(
+                        PredLiteral("p", Number(1)),
+                        LiteralCollection(PredLiteral("p", Number(0))),
+                    ),
+                ),
+                Guard(RelOp.GREATER_OR_EQ, Number(-1), False),
             ),
         )  # choice is satisfiable
 
-        self.assertEqual(
+        assert (
             target_rule.assemble_choices(
                 dict(),
-            ),
-            Constraint(),
+            )
+            == Constraint()
         )  # choice is unsatisfiable (yields constraint)
 
-    def test_choice_rule(self):
-
+    def test_choice_rule(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         ground_elements = (
             ChoiceElement(
@@ -801,23 +685,48 @@ class TestChoice(unittest.TestCase):
         unsafe_var_rule = ChoiceRule(var_choice, (PredLiteral("q", Variable("X")),))
 
         # string representation
-        self.assertEqual(
-            str(ground_rule), '3 < {p(5):p("str"),not q;p(-3):not p("str")} :- q(1).'
+        assert (
+            str(ground_rule) == '3 < {p(5):p("str"),not q;p(-3):not p("str")} :- q(1).'
         )
-        self.assertEqual(
-            str(safe_var_rule),
-            'Y < {p(5):p(X),not q;p(-3):not p("str")} :- q(X),q(Y).',
+        assert (
+            str(safe_var_rule)
+            == 'Y < {p(5):p(X),not q;p(-3):not p("str")} :- q(X),q(Y).'
         )
-        self.assertEqual(
-            str(unsafe_var_rule), 'Y < {p(5):p(X),not q;p(-3):not p("str")} :- q(X).'
+        assert (
+            str(unsafe_var_rule) == 'Y < {p(5):p(X),not q;p(-3):not p("str")} :- q(X).'
         )
-        # self.assertEqual(str(unsafe_var_rule), "p(1) | p(X) :- q.")
+        # TODO:
+        # assert str(unsafe_var_rule) == "p(1) | p(X) :- q.")
         # equality
-        self.assertEqual(
-            ground_rule, ChoiceRule(ground_choice, (PredLiteral("q", Number(1)),))
+        assert ground_rule == ChoiceRule(ground_choice, (PredLiteral("q", Number(1)),))
+        assert safe_var_rule == ChoiceRule(
+            var_choice,
+            (
+                PredLiteral("q", Variable("X")),
+                PredLiteral("q", Variable("Y")),
+            ),
         )
-        self.assertEqual(
-            safe_var_rule,
+        assert unsafe_var_rule == ChoiceRule(
+            var_choice,
+            (PredLiteral("q", Variable("X")),),
+        )
+        assert ground_rule.body == LiteralCollection(PredLiteral("q", Number(1)))
+        assert ground_rule.head == Choice(
+            ground_elements,
+            guards=Guard(RelOp.LESS, Number(3), False),
+        )
+        assert ground_rule.body == LiteralCollection(PredLiteral("q", Number(1)))
+        # hashing
+        assert hash(ground_rule) == hash(
+            ChoiceRule(ground_choice, (PredLiteral("q", Number(1)),))
+        )
+        assert hash(unsafe_var_rule) == hash(
+            ChoiceRule(
+                var_choice,
+                (PredLiteral("q", Variable("X")),),
+            ),
+        )
+        assert hash(safe_var_rule) == hash(
             ChoiceRule(
                 var_choice,
                 (
@@ -826,82 +735,27 @@ class TestChoice(unittest.TestCase):
                 ),
             ),
         )
-        self.assertEqual(
-            unsafe_var_rule,
-            ChoiceRule(
-                var_choice,
-                (PredLiteral("q", Variable("X")),),
-            ),
-        )
-        self.assertEqual(
-            ground_rule.body, LiteralCollection(PredLiteral("q", Number(1)))
-        )
-        self.assertEqual(
-            ground_rule.head,
-            Choice(
-                ground_elements,
-                guards=Guard(RelOp.LESS, Number(3), False),
-            ),
-        )
-        self.assertEqual(
-            ground_rule.body, LiteralCollection(PredLiteral("q", Number(1)))
-        )
-        # hashing
-        self.assertEqual(
-            hash(ground_rule),
-            hash(ChoiceRule(ground_choice, (PredLiteral("q", Number(1)),))),
-        )
-        self.assertEqual(
-            hash(unsafe_var_rule),
-            hash(
-                ChoiceRule(
-                    var_choice,
-                    (PredLiteral("q", Variable("X")),),
-                ),
-            ),
-        )
-        self.assertEqual(
-            hash(safe_var_rule),
-            hash(
-                ChoiceRule(
-                    var_choice,
-                    (
-                        PredLiteral("q", Variable("X")),
-                        PredLiteral("q", Variable("Y")),
-                    ),
-                ),
-            ),
-        )
         # ground
-        self.assertTrue(ground_rule.ground)
-        self.assertFalse(unsafe_var_rule.ground)
-        self.assertFalse(safe_var_rule.ground)
+        assert ground_rule.ground
+        assert not unsafe_var_rule.ground
+        assert not safe_var_rule.ground
         # safety
-        self.assertTrue(ground_rule.safe)
-        self.assertFalse(unsafe_var_rule.safe)
-        self.assertTrue(safe_var_rule.safe)
+        assert ground_rule.safe
+        assert not unsafe_var_rule.safe
+        assert safe_var_rule.safe
         # contains aggregates
-        self.assertFalse(ground_rule.contains_aggregates)
-        self.assertFalse(unsafe_var_rule.contains_aggregates)
-        self.assertFalse(safe_var_rule.contains_aggregates)
-        self.assertTrue(
-            ChoiceRule(
-                ground_choice,
-                (
-                    AggrLiteral(
-                        AggrCount(), tuple(), Guard(RelOp.EQUAL, Number(1), False)
-                    ),
-                ),
-            ).contains_aggregates
-        )
+        assert not ground_rule.contains_aggregates
+        assert not unsafe_var_rule.contains_aggregates
+        assert not safe_var_rule.contains_aggregates
+        assert ChoiceRule(
+            ground_choice,
+            (AggrLiteral(AggrCount(), tuple(), Guard(RelOp.EQUAL, Number(1), False)),),
+        ).contains_aggregates
         # variables
-        self.assertTrue(ground_rule.vars() == ground_rule.global_vars() == set())
-        self.assertEqual(
-            unsafe_var_rule.vars(),
-            {Variable("Y"), Variable("X")},
-        )
-        self.assertEqual(unsafe_var_rule.global_vars(), {Variable("Y"), Variable("X")})
-        self.assertTrue(
+        assert ground_rule.vars() == ground_rule.global_vars() == set()
+        assert unsafe_var_rule.vars() == {Variable("Y"), Variable("X")}
+        assert unsafe_var_rule.global_vars() == {Variable("Y"), Variable("X")}
+        assert (
             safe_var_rule.vars()
             == safe_var_rule.global_vars()
             == {Variable("X"), Variable("Y")}
@@ -932,29 +786,26 @@ class TestChoice(unittest.TestCase):
         )
 
         # substitution
-        self.assertEqual(
-            safe_var_rule.substitute(
-                Substitution({Variable("X"): Number(1), Variable("Y"): String("f")})
-            ),
-            ChoiceRule(
-                Choice(
-                    (
-                        ChoiceElement(
-                            PredLiteral("p", Number(5)),
-                            LiteralCollection(
-                                PredLiteral("p", Number(1)),
-                                Naf(PredLiteral("q")),
-                            ),
-                        ),
-                        ChoiceElement(
-                            PredLiteral("p", Number(-3)),
-                            LiteralCollection(Naf(PredLiteral("p", String("str")))),
+        assert safe_var_rule.substitute(
+            Substitution({Variable("X"): Number(1), Variable("Y"): String("f")})
+        ) == ChoiceRule(
+            Choice(
+                (
+                    ChoiceElement(
+                        PredLiteral("p", Number(5)),
+                        LiteralCollection(
+                            PredLiteral("p", Number(1)),
+                            Naf(PredLiteral("q")),
                         ),
                     ),
-                    guards=Guard(RelOp.LESS, String("f"), False),
+                    ChoiceElement(
+                        PredLiteral("p", Number(-3)),
+                        LiteralCollection(Naf(PredLiteral("p", String("str")))),
+                    ),
                 ),
-                (PredLiteral("q", Number(1)), PredLiteral("q", String("f"))),
+                guards=Guard(RelOp.LESS, String("f"), False),
             ),
+            (PredLiteral("q", Number(1)), PredLiteral("q", String("f"))),
         )
 
         # rewrite choice
@@ -988,94 +839,68 @@ class TestChoice(unittest.TestCase):
         )
         choice_map = dict()
 
-        self.assertEqual(rule.rewrite_choices(1, choice_map), target_rule)
-        self.assertEqual(len(choice_map), 1)
+        assert rule.rewrite_choices(1, choice_map) == target_rule
+        assert len(choice_map) == 1
 
         choice, chi_literal, eps_rule, eta_rules = choice_map[1]
-        self.assertEqual(choice, rule.head)
+        assert choice == rule.head
 
-        self.assertEqual(chi_literal, target_rule.atom)
-        self.assertEqual(
-            eps_rule,
-            ChoiceBaseRule(
-                ChoiceBaseLiteral(
-                    1,
-                    TermTuple(Variable("X"), Variable("Y")),
-                    TermTuple(Variable("X"), Variable("Y")),
-                ),
-                Guard(RelOp.GREATER_OR_EQ, Variable("Y"), False),
-                None,
-                LiteralCollection(
-                    GreaterEqual(Variable("Y"), Number(0)),
-                    PredLiteral("q", Variable("Y")),
-                    Equal(Number(0), Variable("X")),
-                ),
+        assert chi_literal == target_rule.atom
+        assert eps_rule == ChoiceBaseRule(
+            ChoiceBaseLiteral(
+                1,
+                TermTuple(Variable("X"), Variable("Y")),
+                TermTuple(Variable("X"), Variable("Y")),
+            ),
+            Guard(RelOp.GREATER_OR_EQ, Variable("Y"), False),
+            None,
+            LiteralCollection(
+                GreaterEqual(Variable("Y"), Number(0)),
+                PredLiteral("q", Variable("Y")),
+                Equal(Number(0), Variable("X")),
             ),
         )
 
-        self.assertEqual(len(eta_rules), 2)
-        self.assertEqual(
-            eta_rules[0],
-            ChoiceElemRule(
-                ChoiceElemLiteral(
-                    1,
-                    0,
-                    TermTuple(),
-                    TermTuple(Variable("X"), Variable("Y")),
-                    TermTuple(Variable("X"), Variable("Y")),
-                ),
-                elements[0],
-                LiteralCollection(
-                    PredLiteral("q", Variable("X")),
-                    PredLiteral("q", Variable("Y")),
-                    Equal(Number(0), Variable("X")),
-                ),
+        assert len(eta_rules) == 2
+        assert eta_rules[0] == ChoiceElemRule(
+            ChoiceElemLiteral(
+                1,
+                0,
+                TermTuple(),
+                TermTuple(Variable("X"), Variable("Y")),
+                TermTuple(Variable("X"), Variable("Y")),
+            ),
+            elements[0],
+            LiteralCollection(
+                PredLiteral("q", Variable("X")),
+                PredLiteral("q", Variable("Y")),
+                Equal(Number(0), Variable("X")),
             ),
         )
-        self.assertEqual(
-            eta_rules[1],
-            ChoiceElemRule(
-                ChoiceElemLiteral(
-                    1,
-                    1,
-                    TermTuple(),
-                    TermTuple(Variable("X"), Variable("Y")),
-                    TermTuple(Variable("X"), Variable("Y")),
-                ),
-                elements[1],
-                LiteralCollection(
-                    PredLiteral("p", Number(0)),
-                    PredLiteral("q", Variable("Y")),
-                    Equal(Number(0), Variable("X")),
-                ),
+        assert eta_rules[1] == ChoiceElemRule(
+            ChoiceElemLiteral(
+                1,
+                1,
+                TermTuple(),
+                TermTuple(Variable("X"), Variable("Y")),
+                TermTuple(Variable("X"), Variable("Y")),
+            ),
+            elements[1],
+            LiteralCollection(
+                PredLiteral("p", Number(0)),
+                PredLiteral("q", Variable("Y")),
+                Equal(Number(0), Variable("X")),
             ),
         )
 
         # assembling choice
-        self.assertEqual(
-            target_rule.assemble_choices(
-                {
-                    ChoicePlaceholder(
-                        1,
-                        TermTuple(Variable("X"), Variable("Y")),
-                        TermTuple(Variable("X"), Variable("Y")),
-                    ): Choice(
-                        (
-                            ChoiceElement(
-                                PredLiteral("p", Number(0)),
-                                LiteralCollection(PredLiteral("q", Number(0))),
-                            ),
-                            ChoiceElement(
-                                PredLiteral("p", Number(1)),
-                                LiteralCollection(PredLiteral("p", Number(0))),
-                            ),
-                        ),
-                        Guard(RelOp.GREATER_OR_EQ, Number(-1), False),
-                    ),
-                },
-            ),
-            ChoiceRule(
-                Choice(
+        assert target_rule.assemble_choices(
+            {
+                ChoicePlaceholder(
+                    1,
+                    TermTuple(Variable("X"), Variable("Y")),
+                    TermTuple(Variable("X"), Variable("Y")),
+                ): Choice(
                     (
                         ChoiceElement(
                             PredLiteral("p", Number(0)),
@@ -1088,25 +913,32 @@ class TestChoice(unittest.TestCase):
                     ),
                     Guard(RelOp.GREATER_OR_EQ, Number(-1), False),
                 ),
+            },
+        ) == ChoiceRule(
+            Choice(
                 (
-                    PredLiteral("q", Variable("Y")),
-                    Equal(Number(0), Variable("X")),
+                    ChoiceElement(
+                        PredLiteral("p", Number(0)),
+                        LiteralCollection(PredLiteral("q", Number(0))),
+                    ),
+                    ChoiceElement(
+                        PredLiteral("p", Number(1)),
+                        LiteralCollection(PredLiteral("p", Number(0))),
+                    ),
                 ),
+                Guard(RelOp.GREATER_OR_EQ, Number(-1), False),
             ),
-        )  # choice is satisfiable
-
-        self.assertEqual(
-            target_rule.assemble_choices(
-                dict(),
-            ),
-            Constraint(
+            (
                 PredLiteral("q", Variable("Y")),
                 Equal(Number(0), Variable("X")),
             ),
+        )  # choice is satisfiable
+
+        assert target_rule.assemble_choices(
+            dict(),
+        ) == Constraint(
+            PredLiteral("q", Variable("Y")),
+            Equal(Number(0), Variable("X")),
         )  # choice is unsatisfiable (yields constraint)
 
         # TODO: propagate
-
-
-if __name__ == "__main__":  # pragma: no cover
-    unittest.main()

@@ -1,4 +1,4 @@
-import unittest
+from typing import Self
 
 import aspy
 from aspy.program.literals import LiteralCollection, PredLiteral
@@ -8,85 +8,73 @@ from aspy.program.terms import ArithVariable, Minus, Number, String, Variable
 from aspy.program.variable_table import VariableTable
 
 
-class TestLiteral(unittest.TestCase):
-    def test_literal_collection(self):
-
+class TestLiteral:
+    def test_literal_collection(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         literals = LiteralCollection(
             PredLiteral("p", Number(0), Variable("X")),
             PredLiteral("q", Minus(Variable("Y"))),
         )
         # length
-        self.assertEqual(len(literals), 2)
+        assert len(literals) == 2
         # string representation
-        self.assertEqual(str(literals), "p(0,X),q(-Y)")
+        assert str(literals) == "p(0,X),q(-Y)"
         # equality
-        self.assertEqual(literals[0], PredLiteral("p", Number(0), Variable("X")))
-        self.assertEqual(literals[1], PredLiteral("q", Minus(Variable("Y"))))
-        self.assertTrue(
-            literals
-            == LiteralCollection(
+        assert literals[0] == PredLiteral("p", Number(0), Variable("X"))
+        assert literals[1] == PredLiteral("q", Minus(Variable("Y")))
+        assert literals == LiteralCollection(
+            PredLiteral("p", Number(0), Variable("X")),
+            PredLiteral("q", Minus(Variable("Y"))),
+        )
+        # hashing
+        assert hash(literals) == hash(
+            LiteralCollection(
                 PredLiteral("p", Number(0), Variable("X")),
                 PredLiteral("q", Minus(Variable("Y"))),
             )
         )
-        # hashing
-        self.assertEqual(
-            hash(literals),
-            hash(
-                LiteralCollection(
-                    PredLiteral("p", Number(0), Variable("X")),
-                    PredLiteral("q", Minus(Variable("Y"))),
-                )
-            ),
-        )
         # ground
-        self.assertFalse(literals.ground)
+        assert not literals.ground
         # variables
-        self.assertTrue(
+        assert (
             literals.vars() == literals.global_vars() == {Variable("X"), Variable("Y")}
         )
         # replace arithmetic terms
-        self.assertEqual(
-            literals.replace_arith(VariableTable()),
-            LiteralCollection(
-                PredLiteral("p", Number(0), Variable("X")),
-                PredLiteral("q", ArithVariable(0, Minus(Variable("Y")))),
-            ),
+        assert literals.replace_arith(VariableTable()) == LiteralCollection(
+            PredLiteral("p", Number(0), Variable("X")),
+            PredLiteral("q", ArithVariable(0, Minus(Variable("Y")))),
         )
-        self.assertEqual(
-            literals.safety(),
-            SafetyTriplet.closure(literals[0].safety(), literals[1].safety()),
+        assert literals.safety() == SafetyTriplet.closure(
+            literals[0].safety(), literals[1].safety()
         )
         # safety characterization
-        self.assertEqual(
-            literals.safety(),
-            SafetyTriplet.closure(literals[0].safety(), literals[1].safety()),
+        assert literals.safety() == SafetyTriplet.closure(
+            literals[0].safety(), literals[1].safety()
         )
 
         # substitute
-        self.assertEqual(
-            LiteralCollection(PredLiteral("p", String("f"), Variable("X"))).substitute(
-                Substitution({String("f"): Number(0), Variable("X"): Number(1)})
-            ),
-            LiteralCollection(PredLiteral("p", String("f"), Number(1))),
+        assert LiteralCollection(
+            PredLiteral("p", String("f"), Variable("X"))
+        ).substitute(
+            Substitution({String("f"): Number(0), Variable("X"): Number(1)})
+        ) == LiteralCollection(
+            PredLiteral("p", String("f"), Number(1))
         )  # NOTE: substitution is invalid
         # match
-        self.assertEqual(
+        assert LiteralCollection(
+            PredLiteral("p", Variable("X"), String("f")),
+            PredLiteral("q", Variable("X")),
+        ).match(
             LiteralCollection(
-                PredLiteral("p", Variable("X"), String("f")),
-                PredLiteral("q", Variable("X")),
-            ).match(
-                LiteralCollection(
-                    PredLiteral("p", Number(1), String("f")),
-                    PredLiteral("q", Number(1)),
-                )
-            ),
-            Substitution({Variable("X"): Number(1)}),
+                PredLiteral("p", Number(1), String("f")),
+                PredLiteral("q", Number(1)),
+            )
+        ) == Substitution(
+            {Variable("X"): Number(1)}
         )
-        self.assertEqual(
+        assert (
             LiteralCollection(
                 PredLiteral("p", Variable("X"), String("f")),
                 PredLiteral("q", Variable("X")),
@@ -95,17 +83,17 @@ class TestLiteral(unittest.TestCase):
                     PredLiteral("p", Number(1), String("g")),
                     PredLiteral("q", Number(1)),
                 )
-            ),
-            None,
+            )
+            is None
         )  # ground terms don't match
-        self.assertEqual(
+        assert (
             LiteralCollection(
                 PredLiteral("p", Variable("X"), String("f")),
                 PredLiteral("q", Variable("X")),
-            ).match(PredLiteral("p")),
-            None,
+            ).match(PredLiteral("p"))
+            is None
         )  # wrong type
-        self.assertEqual(
+        assert (
             LiteralCollection(
                 PredLiteral("p", Variable("X"), String("f")),
                 PredLiteral("q", Variable("X")),
@@ -114,10 +102,10 @@ class TestLiteral(unittest.TestCase):
                     PredLiteral("p", Number(1), String("f")),
                     PredLiteral("q", Number(0)),
                 )
-            ),
-            None,
+            )
+            is None
         )  # assignment conflict
-        self.assertEqual(
+        assert (
             LiteralCollection(
                 PredLiteral("p", Number(0), String("f")),
                 PredLiteral("q", Number(1)),
@@ -128,29 +116,21 @@ class TestLiteral(unittest.TestCase):
                     PredLiteral("u", Number(0)),
                     PredLiteral("q", Number(1)),
                 )
-            ),
-            Substitution(),
+            )
+            == Substitution()
         )  # different order of literals
 
         # combining literal collections
-        self.assertEqual(
-            literals + LiteralCollection(PredLiteral("u")),
-            LiteralCollection(
-                PredLiteral("p", Number(0), Variable("X")),
-                PredLiteral("q", Minus(Variable("Y"))),
-                PredLiteral("u"),
-            ),
+        assert literals + LiteralCollection(PredLiteral("u")) == LiteralCollection(
+            PredLiteral("p", Number(0), Variable("X")),
+            PredLiteral("q", Minus(Variable("Y"))),
+            PredLiteral("u"),
         )
         # without
-        self.assertEqual(
-            literals.without(PredLiteral("p", Number(0), Variable("X"))),
-            LiteralCollection(PredLiteral("q", Minus(Variable("Y")))),
-        )
-        self.assertEqual(
-            literals.without(PredLiteral("p", Number(1), Variable("X"))), literals
+        assert literals.without(
+            PredLiteral("p", Number(0), Variable("X"))
+        ) == LiteralCollection(PredLiteral("q", Minus(Variable("Y"))))
+        assert (
+            literals.without(PredLiteral("p", Number(1), Variable("X"))) == literals
         )  # not part of original literal collection
         # TODO: iter
-
-
-if __name__ == "__main__":  # pragma: no cover
-    unittest.main()

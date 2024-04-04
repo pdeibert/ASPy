@@ -1,4 +1,6 @@
-import unittest
+from typing import Self
+
+import pytest  # type: ignore
 
 import aspy
 from aspy.program.literals import (
@@ -26,11 +28,10 @@ from aspy.program.symbols import SpecialChar
 from aspy.program.terms import Number, TermTuple, Variable
 
 
-class TestSpecial(unittest.TestCase):
-    def test_aggr_base_rule(self):
-
+class TestSpecial:
+    def test_aggr_base_rule(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         global_vars = TermTuple(Variable("X"), Variable("Y"))
         base_value = Number(0)
@@ -68,116 +69,103 @@ class TestSpecial(unittest.TestCase):
         )
 
         # invalid initialization
-        self.assertRaises(
-            ValueError,
-            AggrBaseRule.from_scratch,
-            1,
-            {global_vars},
-            *ground_guards,
-            base_value,
-            LiteralCollection(PredLiteral("p", Number(2), Number(3))),
-        )  # non-tuple for 'global_vars'
-        self.assertRaises(
-            ValueError,
-            AggrBaseRule.from_scratch,
-            1,
-            global_vars,
-            Guard(RelOp.GREATER_OR_EQ, Number(-1), False),
-            Guard(RelOp.LESS_OR_EQ, Number(10), False),
-            base_value,
-            LiteralCollection(PredLiteral("p", Number(2), Number(3))),
-        )  # two left guards
+        with pytest.raises(ValueError):
+            AggrBaseRule.from_scratch(
+                1,
+                {global_vars},
+                *ground_guards,
+                base_value,
+                LiteralCollection(PredLiteral("p", Number(2), Number(3))),
+            )  # non-tuple for 'global_vars'
+        with pytest.raises(ValueError):
+            AggrBaseRule.from_scratch(
+                1,
+                global_vars,
+                Guard(RelOp.GREATER_OR_EQ, Number(-1), False),
+                Guard(RelOp.LESS_OR_EQ, Number(10), False),
+                base_value,
+                LiteralCollection(PredLiteral("p", Number(2), Number(3))),
+            )  # two left guards
         # correct initialization
-        self.assertTrue(ground_rule.ref_id == var_rule.ref_id == 1)
+        assert ground_rule.ref_id == var_rule.ref_id == 1
         # string representation
-        self.assertEqual(
-            str(ground_rule),
-            f"{SpecialChar.EPS.value}{SpecialChar.ALPHA.value}{1}(10,3) :- -1>=0,0<=10,p(2,3).",  # noqa
-        )
-        self.assertEqual(
-            str(var_rule),
-            f"{SpecialChar.EPS.value}{SpecialChar.ALPHA.value}{1}(X,Y) :- -1>=0,0<=X,p(2,Y).",  # noqa
-        )
+        assert (
+            str(ground_rule)
+            == f"{SpecialChar.EPS.value}{SpecialChar.ALPHA.value}{1}(10,3) :- -1>=0,0<=10,p(2,3)."
+        )  # noqa
+        assert (
+            str(var_rule)
+            == f"{SpecialChar.EPS.value}{SpecialChar.ALPHA.value}{1}(X,Y) :- -1>=0,0<=X,p(2,Y)."
+        )  # noqa
         # equality
-        self.assertEqual(len(ground_rule.body), 3)
-        self.assertEqual(
-            ground_rule.body[0], GreaterEqual(Number(-1), Number(0))
+        assert len(ground_rule.body) == 3
+        assert ground_rule.body[0] == GreaterEqual(
+            Number(-1), Number(0)
         )  # NOTE: order of operands in built-in terms
-        self.assertEqual(
-            ground_rule.body[1], LessEqual(Number(0), Number(10))
+        assert ground_rule.body[1] == LessEqual(
+            Number(0), Number(10)
         )  # NOTE: order of operands in built-in terms
-        self.assertEqual(ground_rule.body[2], PredLiteral("p", Number(2), Number(3)))
-        self.assertEqual(len(var_rule.body), 3)
-        self.assertEqual(
-            var_rule.body[0], GreaterEqual(Number(-1), Number(0))
+        assert ground_rule.body[2] == PredLiteral("p", Number(2), Number(3))
+        assert len(var_rule.body) == 3
+        assert var_rule.body[0] == GreaterEqual(
+            Number(-1), Number(0)
         )  # NOTE: order of operands in built-in terms
-        self.assertEqual(
-            var_rule.body[1], LessEqual(Number(0), Variable("X"))
+        assert var_rule.body[1] == LessEqual(
+            Number(0), Variable("X")
         )  # NOTE: order of operands in built-in terms
-        self.assertEqual(var_rule.body[2], PredLiteral("p", Number(2), Variable("Y")))
-        self.assertEqual(ground_rule.head, LiteralCollection(ground_eps_literal))
-        self.assertEqual(
-            ground_rule.body,
-            ground_guard_literals
-            + LiteralCollection(PredLiteral("p", Number(2), Number(3))),
+        assert var_rule.body[2] == PredLiteral("p", Number(2), Variable("Y"))
+        assert ground_rule.head == LiteralCollection(ground_eps_literal)
+        assert ground_rule.body == ground_guard_literals + LiteralCollection(
+            PredLiteral("p", Number(2), Number(3))
         )
-        self.assertEqual(var_rule.head, LiteralCollection(var_eps_literal))
-        self.assertEqual(
-            var_rule.body,
-            var_guard_literals
-            + LiteralCollection(PredLiteral("p", Number(2), Variable("Y"))),
+        assert var_rule.head == LiteralCollection(var_eps_literal)
+        assert var_rule.body == var_guard_literals + LiteralCollection(
+            PredLiteral("p", Number(2), Variable("Y"))
         )
         # hashing
-        self.assertEqual(
-            hash(ground_rule),
-            hash(
-                AggrBaseRule(
-                    ground_eps_literal,
-                    *ground_guards,
-                    ground_guard_literals
-                    + LiteralCollection(PredLiteral("p", Number(2), Number(3))),
-                )
-            ),
+        assert hash(ground_rule) == hash(
+            AggrBaseRule(
+                ground_eps_literal,
+                *ground_guards,
+                ground_guard_literals
+                + LiteralCollection(PredLiteral("p", Number(2), Number(3))),
+            )
         )
-        self.assertEqual(
-            hash(var_rule),
-            hash(
-                AggrBaseRule(
-                    var_eps_literal,
-                    *var_guards,
-                    var_guard_literals
-                    + LiteralCollection(PredLiteral("p", Number(2), Variable("Y"))),
-                )
-            ),
+        assert hash(var_rule) == hash(
+            AggrBaseRule(
+                var_eps_literal,
+                *var_guards,
+                var_guard_literals
+                + LiteralCollection(PredLiteral("p", Number(2), Variable("Y"))),
+            )
         )
         # ground
-        self.assertTrue(ground_rule.ground)
-        self.assertFalse(var_rule.ground)
+        assert ground_rule.ground
+        assert not var_rule.ground
         # safety
-        self.assertTrue(ground_rule.safe)
-        self.assertFalse(var_rule.safe)
+        assert ground_rule.safe
+        assert not var_rule.safe
         # variables
-        self.assertTrue(ground_rule.vars() == ground_rule.global_vars() == set())
-        self.assertTrue(var_rule.vars() == var_rule.global_vars() == set(global_vars))
+        assert ground_rule.vars() == ground_rule.global_vars() == set()
+        assert var_rule.vars() == var_rule.global_vars() == set(global_vars)
         # TODO: replace arithmetic terms
         # TODO: gather variable assignement
 
         # substitution
-        self.assertEqual(
+        assert (
             var_rule.substitute(
                 Substitution({Variable("X"): Number(10), Variable("Y"): Number(3)})
-            ),
-            ground_rule,
+            )
+            == ground_rule
         )
         # match
-        # self.assertEqual(var_rule.match(ground_rule), Substitution({Variable('X'): Number(10), Variable('Y'): Number(3)}))
+        # assert Eq var_rule.match(ground_rule), Substitution({Variable('X'): Number(10), Variable('Y'): Number(3)}))
         # TODO: ground terms don't match
         # TODO: assignment conflict
 
-    def test_aggr_element_rule(self):
-
+    def test_aggr_element_rule(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         local_vars = TermTuple(Variable("L"))
         global_vars = TermTuple(Variable("X"), Variable("Y"))
@@ -208,66 +196,60 @@ class TestSpecial(unittest.TestCase):
         )
 
         # correct initialization
-        self.assertTrue(ground_rule.ref_id == var_rule.ref_id == 1)
-        self.assertTrue(ground_rule.element_id == var_rule.element_id == 3)
-        self.assertTrue(ground_rule.element == var_rule.element == element)
+        assert ground_rule.ref_id == var_rule.ref_id == 1
+        assert ground_rule.element_id == var_rule.element_id == 3
+        assert ground_rule.element == var_rule.element == element
         # string representation
-        self.assertEqual(
-            str(ground_rule),
-            f"{SpecialChar.ETA.value}{SpecialChar.ALPHA.value}{1}_{3}(5,10,3) :- p(5),p(2,3).",  # noqa
-        )
-        self.assertEqual(
-            str(var_rule),
-            f"{SpecialChar.ETA.value}{SpecialChar.ALPHA.value}{1}_{3}(L,X,Y) :- p(L),p(2,Y).",  # noqa
-        )
+        assert (
+            str(ground_rule)
+            == f"{SpecialChar.ETA.value}{SpecialChar.ALPHA.value}{1}_{3}(5,10,3) :- p(5),p(2,3)."
+        )  # noqa
+        assert (
+            str(var_rule)
+            == f"{SpecialChar.ETA.value}{SpecialChar.ALPHA.value}{1}_{3}(L,X,Y) :- p(L),p(2,Y)."
+        )  # noqa
         # equality
-        self.assertEqual(len(ground_rule.body), 2)
-        self.assertEqual(ground_rule.body[0], PredLiteral("p", Number(5)))
-        self.assertEqual(ground_rule.body[1], PredLiteral("p", Number(2), Number(3)))
-        self.assertEqual(len(var_rule.body), 2)
-        self.assertEqual(var_rule.body[0], PredLiteral("p", Variable("L")))
-        self.assertEqual(var_rule.body[1], PredLiteral("p", Number(2), Variable("Y")))
+        assert len(ground_rule.body) == 2
+        assert ground_rule.body[0] == PredLiteral("p", Number(5))
+        assert ground_rule.body[1] == PredLiteral("p", Number(2), Number(3))
+        assert len(var_rule.body) == 2
+        assert var_rule.body[0] == PredLiteral("p", Variable("L"))
+        assert var_rule.body[1] == PredLiteral("p", Number(2), Variable("Y"))
         # hashing
-        self.assertEqual(
-            hash(ground_rule),
-            hash(
-                AggrElemRule(
-                    ground_eta_literal,
-                    element,
-                    LiteralCollection(
-                        PredLiteral("p", Number(5)),
-                        PredLiteral("p", Number(2), Number(3)),
-                    ),
-                )
-            ),
+        assert hash(ground_rule) == hash(
+            AggrElemRule(
+                ground_eta_literal,
+                element,
+                LiteralCollection(
+                    PredLiteral("p", Number(5)),
+                    PredLiteral("p", Number(2), Number(3)),
+                ),
+            )
         )
-        self.assertEqual(
-            hash(var_rule),
-            hash(
-                AggrElemRule(
-                    var_eta_literal,
-                    element,
-                    element.literals
-                    + LiteralCollection(PredLiteral("p", Number(2), Variable("Y"))),
-                )
-            ),
+        assert hash(var_rule) == hash(
+            AggrElemRule(
+                var_eta_literal,
+                element,
+                element.literals
+                + LiteralCollection(PredLiteral("p", Number(2), Variable("Y"))),
+            )
         )
         # ground
-        self.assertTrue(ground_rule.ground)
-        self.assertFalse(var_rule.ground)
+        assert ground_rule.ground
+        assert not var_rule.ground
         # safety
-        self.assertTrue(ground_rule.safe)
-        self.assertFalse(var_rule.safe)
+        assert ground_rule.safe
+        assert not var_rule.safe
         # variables
-        self.assertTrue(ground_rule.vars() == ground_rule.global_vars() == set())
-        self.assertTrue(
+        assert ground_rule.vars() == ground_rule.global_vars() == set()
+        assert (
             var_rule.vars() == var_rule.global_vars() == set(global_vars + local_vars)
         )
         # TODO: replace arithmetic terms
         # TODO: gather variable assignement
 
         # substitution
-        self.assertEqual(
+        assert (
             var_rule.substitute(
                 Substitution(
                     {
@@ -276,18 +258,17 @@ class TestSpecial(unittest.TestCase):
                         Variable("Y"): Number(3),
                     }
                 )
-            ),
-            ground_rule,
+            )
+            == ground_rule
         )
         # match
-        # self.assertEqual(var_rule.match(ground_rule), Substitution({Variable('L'): Number(5), Variable('X'): Number(10), Variable('Y'): Number(3)}))
+        # assert Eq var_rule.match(ground_rule), Substitution({Variable('L'): Number(5), Variable('X'): Number(10), Variable('Y'): Number(3)}))
         # TODO: ground terms don't match
         # TODO: assignment conflict
 
-    def test_choice_base_rule(self):
-
+    def test_choice_base_rule(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         global_vars = TermTuple(Variable("X"), Variable("Y"))
         base_value = Number(0)
@@ -325,115 +306,102 @@ class TestSpecial(unittest.TestCase):
         )
 
         # invalid initialization
-        self.assertRaises(
-            ValueError,
-            ChoiceBaseRule.from_scratch,
-            1,
-            {global_vars},
-            *ground_guards,
-            LiteralCollection(PredLiteral("p", Number(2), Number(3))),
-        )  # non-tuple for 'global_vars'
-        self.assertRaises(
-            ValueError,
-            ChoiceBaseRule.from_scratch,
-            1,
-            global_vars,
-            Guard(RelOp.GREATER_OR_EQ, Number(-1), False),
-            Guard(RelOp.LESS_OR_EQ, Number(10), False),
-            LiteralCollection(PredLiteral("p", Number(2), Number(3))),
-        )  # two left guards
+        with pytest.raises(ValueError):
+            ChoiceBaseRule.from_scratch(
+                1,
+                {global_vars},
+                *ground_guards,
+                LiteralCollection(PredLiteral("p", Number(2), Number(3))),
+            )  # non-tuple for 'global_vars'
+        with pytest.raises(ValueError):
+            ChoiceBaseRule.from_scratch(
+                1,
+                global_vars,
+                Guard(RelOp.GREATER_OR_EQ, Number(-1), False),
+                Guard(RelOp.LESS_OR_EQ, Number(10), False),
+                LiteralCollection(PredLiteral("p", Number(2), Number(3))),
+            )  # two left guards
         # correct initialization
-        self.assertTrue(ground_rule.ref_id == var_rule.ref_id == 1)
+        assert ground_rule.ref_id == var_rule.ref_id == 1
         # string representation
-        self.assertEqual(
-            str(ground_rule),
-            f"{SpecialChar.EPS.value}{SpecialChar.CHI.value}{1}(10,3) :- -1>=0,0<=10,p(2,3).",  # noqa
-        )
-        self.assertEqual(
-            str(var_rule),
-            f"{SpecialChar.EPS.value}{SpecialChar.CHI.value}{1}(X,Y) :- -1>=0,0<=X,p(2,Y).",  # noqa
-        )
+        assert (
+            str(ground_rule)
+            == f"{SpecialChar.EPS.value}{SpecialChar.CHI.value}{1}(10,3) :- -1>=0,0<=10,p(2,3)."
+        )  # noqa
+        assert (
+            str(var_rule)
+            == f"{SpecialChar.EPS.value}{SpecialChar.CHI.value}{1}(X,Y) :- -1>=0,0<=X,p(2,Y)."
+        )  # noqa
 
         # equality
-        self.assertEqual(len(ground_rule.body), 3)
-        self.assertEqual(
-            ground_rule.body[0], GreaterEqual(Number(-1), Number(0))
+        assert len(ground_rule.body) == 3
+        assert ground_rule.body[0] == GreaterEqual(
+            Number(-1), Number(0)
         )  # NOTE: order of operands in built-in terms
-        self.assertEqual(
-            ground_rule.body[1], LessEqual(Number(0), Number(10))
+        assert ground_rule.body[1] == LessEqual(
+            Number(0), Number(10)
         )  # NOTE: order of operands in built-in terms
-        self.assertEqual(ground_rule.body[2], PredLiteral("p", Number(2), Number(3)))
-        self.assertEqual(len(var_rule.body), 3)
-        self.assertEqual(
-            var_rule.body[0], GreaterEqual(Number(-1), Number(0))
+        assert ground_rule.body[2] == PredLiteral("p", Number(2), Number(3))
+        assert len(var_rule.body) == 3
+        assert var_rule.body[0] == GreaterEqual(
+            Number(-1), Number(0)
         )  # NOTE: order of operands in built-in terms
-        self.assertEqual(
-            var_rule.body[1], LessEqual(Number(0), Variable("X"))
+        assert var_rule.body[1] == LessEqual(
+            Number(0), Variable("X")
         )  # NOTE: order of operands in built-in terms
-        self.assertEqual(var_rule.body[2], PredLiteral("p", Number(2), Variable("Y")))
-        self.assertEqual(ground_rule.head, LiteralCollection(ground_eps_literal))
-        self.assertEqual(
-            ground_rule.body,
-            ground_guard_literals
-            + LiteralCollection(PredLiteral("p", Number(2), Number(3))),
+        assert var_rule.body[2] == PredLiteral("p", Number(2), Variable("Y"))
+        assert ground_rule.head == LiteralCollection(ground_eps_literal)
+        assert ground_rule.body == ground_guard_literals + LiteralCollection(
+            PredLiteral("p", Number(2), Number(3))
         )
-        self.assertEqual(var_rule.head, LiteralCollection(var_eps_literal))
-        self.assertEqual(
-            var_rule.body,
-            var_guard_literals
-            + LiteralCollection(PredLiteral("p", Number(2), Variable("Y"))),
+        assert var_rule.head == LiteralCollection(var_eps_literal)
+        assert var_rule.body == var_guard_literals + LiteralCollection(
+            PredLiteral("p", Number(2), Variable("Y"))
         )
         # hashing
-        self.assertEqual(
-            hash(ground_rule),
-            hash(
-                AggrBaseRule(
-                    ground_eps_literal,
-                    *ground_guards,
-                    ground_guard_literals
-                    + LiteralCollection(PredLiteral("p", Number(2), Number(3))),
-                )
-            ),
+        assert hash(ground_rule) == hash(
+            AggrBaseRule(
+                ground_eps_literal,
+                *ground_guards,
+                ground_guard_literals
+                + LiteralCollection(PredLiteral("p", Number(2), Number(3))),
+            )
         )
-        self.assertEqual(
-            hash(var_rule),
-            hash(
-                ChoiceBaseRule(
-                    var_eps_literal,
-                    *var_guards,
-                    var_guard_literals
-                    + LiteralCollection(PredLiteral("p", Number(2), Variable("Y"))),
-                )
-            ),
+        assert hash(var_rule) == hash(
+            ChoiceBaseRule(
+                var_eps_literal,
+                *var_guards,
+                var_guard_literals
+                + LiteralCollection(PredLiteral("p", Number(2), Variable("Y"))),
+            )
         )
         # ground
-        self.assertTrue(ground_rule.ground)
-        self.assertFalse(var_rule.ground)
+        assert ground_rule.ground
+        assert not var_rule.ground
         # safety
-        self.assertTrue(ground_rule.safe)
-        self.assertFalse(var_rule.safe)
+        assert ground_rule.safe
+        assert not var_rule.safe
         # variables
-        self.assertTrue(ground_rule.vars() == ground_rule.global_vars() == set())
-        self.assertTrue(var_rule.vars() == var_rule.global_vars() == set(global_vars))
+        assert ground_rule.vars() == ground_rule.global_vars() == set()
+        assert var_rule.vars() == var_rule.global_vars() == set(global_vars)
         # TODO: replace arithmetic terms
         # TODO: gather variable assignement
 
         # substitution
-        self.assertEqual(
+        assert (
             var_rule.substitute(
                 Substitution({Variable("X"): Number(10), Variable("Y"): Number(3)})
-            ),
-            ground_rule,
+            )
+            == ground_rule
         )
         # match
-        # self.assertEqual(var_rule.match(ground_rule), Substitution({Variable('X'): Number(10), Variable('Y'): Number(3)}))
+        # assert Eq var_rule.match(ground_rule), Substitution({Variable('X'): Number(10), Variable('Y'): Number(3)}))
         # TODO: ground terms don't match
         # TODO: assignment conflict
 
-    def test_choice_element_rule(self):
-
+    def test_choice_element_rule(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         local_vars = TermTuple(Variable("L"))
         global_vars = TermTuple(Variable("X"), Variable("Y"))
@@ -465,66 +433,60 @@ class TestSpecial(unittest.TestCase):
         )
 
         # correct initialization
-        self.assertTrue(ground_rule.ref_id == var_rule.ref_id == 1)
-        self.assertTrue(ground_rule.element_id == var_rule.element_id == 3)
-        self.assertTrue(ground_rule.element == var_rule.element == element)
+        assert ground_rule.ref_id == var_rule.ref_id == 1
+        assert ground_rule.element_id == var_rule.element_id == 3
+        assert ground_rule.element == var_rule.element == element
         # string representation
-        self.assertEqual(
-            str(ground_rule),
-            f"{SpecialChar.ETA.value}{SpecialChar.CHI.value}{1}_{3}(5,10,3) :- p(5),p(2,3).",  # noqa
-        )
-        self.assertEqual(
-            str(var_rule),
-            f"{SpecialChar.ETA.value}{SpecialChar.CHI.value}{1}_{3}(L,X,Y) :- p(L),p(2,Y).",  # noqa
-        )
+        assert (
+            str(ground_rule)
+            == f"{SpecialChar.ETA.value}{SpecialChar.CHI.value}{1}_{3}(5,10,3) :- p(5),p(2,3)."
+        )  # noqa
+        assert (
+            str(var_rule)
+            == f"{SpecialChar.ETA.value}{SpecialChar.CHI.value}{1}_{3}(L,X,Y) :- p(L),p(2,Y)."
+        )  # noqa
         # equality
-        self.assertEqual(len(ground_rule.body), 2)
-        self.assertEqual(ground_rule.body[0], PredLiteral("p", Number(5)))
-        self.assertEqual(ground_rule.body[1], PredLiteral("p", Number(2), Number(3)))
-        self.assertEqual(len(var_rule.body), 2)
-        self.assertEqual(var_rule.body[0], PredLiteral("p", Variable("L")))
-        self.assertEqual(var_rule.body[1], PredLiteral("p", Number(2), Variable("Y")))
+        assert len(ground_rule.body) == 2
+        assert ground_rule.body[0] == PredLiteral("p", Number(5))
+        assert ground_rule.body[1] == PredLiteral("p", Number(2), Number(3))
+        assert len(var_rule.body) == 2
+        assert var_rule.body[0] == PredLiteral("p", Variable("L"))
+        assert var_rule.body[1] == PredLiteral("p", Number(2), Variable("Y"))
         # hashing
-        self.assertEqual(
-            hash(ground_rule),
-            hash(
-                ChoiceElemRule(
-                    ground_eta_literal,
-                    element,
-                    LiteralCollection(
-                        PredLiteral("p", Number(5)),
-                        PredLiteral("p", Number(2), Number(3)),
-                    ),
-                )
-            ),
+        assert hash(ground_rule) == hash(
+            ChoiceElemRule(
+                ground_eta_literal,
+                element,
+                LiteralCollection(
+                    PredLiteral("p", Number(5)),
+                    PredLiteral("p", Number(2), Number(3)),
+                ),
+            )
         )
-        self.assertEqual(
-            hash(var_rule),
-            hash(
-                ChoiceElemRule(
-                    var_eta_literal,
-                    element,
-                    element.literals
-                    + LiteralCollection(PredLiteral("p", Number(2), Variable("Y"))),
-                )
-            ),
+        assert hash(var_rule) == hash(
+            ChoiceElemRule(
+                var_eta_literal,
+                element,
+                element.literals
+                + LiteralCollection(PredLiteral("p", Number(2), Variable("Y"))),
+            )
         )
         # ground
-        self.assertTrue(ground_rule.ground)
-        self.assertFalse(var_rule.ground)
+        assert ground_rule.ground
+        assert not var_rule.ground
         # safety
-        self.assertTrue(ground_rule.safe)
-        self.assertFalse(var_rule.safe)
+        assert ground_rule.safe
+        assert not var_rule.safe
         # variables
-        self.assertTrue(ground_rule.vars() == ground_rule.global_vars() == set())
-        self.assertTrue(
+        assert ground_rule.vars() == ground_rule.global_vars() == set()
+        assert (
             var_rule.vars() == var_rule.global_vars() == set(global_vars + local_vars)
         )
         # TODO: replace arithmetic terms
         # TODO: gather variable assignement
 
         # substitution
-        self.assertEqual(
+        assert (
             var_rule.substitute(
                 Substitution(
                     {
@@ -533,14 +495,10 @@ class TestSpecial(unittest.TestCase):
                         Variable("Y"): Number(3),
                     }
                 )
-            ),
-            ground_rule,
+            )
+            == ground_rule
         )
         # match
-        # self.assertEqual(var_rule.match(ground_rule), Substitution({Variable('L'): Number(5), Variable('X'): Number(10), Variable('Y'): Number(3)}))
+        # assert Eq var_rule.match(ground_rule), Substitution({Variable('L'): Number(5), Variable('X'): Number(10), Variable('Y'): Number(3)}))
         # TODO: ground terms don't match
         # TODO: assignment conflict
-
-
-if __name__ == "__main__":  # pragma: no cover
-    unittest.main()

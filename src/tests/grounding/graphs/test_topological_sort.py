@@ -1,14 +1,13 @@
-import unittest
+import pytest  # type: ignore
 
 import aspy
 from aspy.grounding.graphs import topological_sort
 
 
-class TestSCC(unittest.TestCase):
+class TestSCC:
     def test_topological_sort_acyclic(self):
-
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         nodes = {"A", "B", "C", "D", "E"}
         edges = {("A", "C"), ("B", "C"), ("B", "E"), ("C", "D")}
@@ -20,18 +19,14 @@ class TestSCC(unittest.TestCase):
             ["B", "E", "A", "C", "D"],
         ]
 
-        self.assertTrue(sequence in valid_sequences)
+        assert sequence in valid_sequences
 
     def test_topological_sort_cyclic(self):
-
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         nodes = {"A", "B", "C", "D", "E"}
         edges = {("A", "C"), ("B", "C"), ("C", "D"), ("C", "E"), ("E", "B")}
 
-        self.assertRaises(ValueError, topological_sort, nodes, edges)
-
-
-if __name__ == "__main__":  # pragma: no cover
-    unittest.main()
+        with pytest.raises(ValueError):
+            topological_sort(nodes, edges)

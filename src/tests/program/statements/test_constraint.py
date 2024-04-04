@@ -1,4 +1,4 @@
-import unittest
+from typing import Self
 
 import aspy
 from aspy.program.literals import (
@@ -22,11 +22,10 @@ from aspy.program.terms import ArithVariable, Minus, Number, String, TermTuple, 
 from aspy.program.variable_table import VariableTable
 
 
-class TestConstraint(unittest.TestCase):
-    def test_constraint(self):
-
+class TestConstraint:
+    def test_constraint(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         ground_rule = Constraint(PredLiteral("p", Number(0)), PredLiteral("q"))
         var_rule = Constraint(
@@ -34,73 +33,54 @@ class TestConstraint(unittest.TestCase):
         )
 
         # string representation
-        self.assertEqual(str(ground_rule), ":- p(0), q.")
-        self.assertEqual(str(var_rule), ":- p(X), q(X).")
+        assert str(ground_rule) == ":- p(0), q."
+        assert str(var_rule) == ":- p(X), q(X)."
         # equality
-        self.assertEqual(
-            ground_rule,
-            Constraint(PredLiteral("p", Number(0)), PredLiteral("q")),
+        assert ground_rule == Constraint(PredLiteral("p", Number(0)), PredLiteral("q"))
+        assert var_rule == Constraint(
+            PredLiteral("p", Variable("X")),
+            PredLiteral("q", Variable("X")),
         )
-        self.assertEqual(
-            var_rule,
-            Constraint(
-                PredLiteral("p", Variable("X")),
-                PredLiteral("q", Variable("X")),
-            ),
+        assert ground_rule.head == LiteralCollection()
+        assert ground_rule.body == LiteralCollection(
+            PredLiteral("p", Number(0)), PredLiteral("q")
         )
-        self.assertEqual(ground_rule.head, LiteralCollection())
-        self.assertEqual(
-            ground_rule.body,
-            LiteralCollection(PredLiteral("p", Number(0)), PredLiteral("q")),
-        )
-        self.assertEqual(var_rule.head, LiteralCollection())
-        self.assertEqual(
-            var_rule.body,
-            LiteralCollection(
-                PredLiteral("p", Variable("X")),
-                PredLiteral("q", Variable("X")),
-            ),
+        assert var_rule.head == LiteralCollection()
+        assert var_rule.body == LiteralCollection(
+            PredLiteral("p", Variable("X")),
+            PredLiteral("q", Variable("X")),
         )
         # hashing
-        self.assertEqual(
-            hash(ground_rule),
-            hash(Constraint(PredLiteral("p", Number(0)), PredLiteral("q"))),
+        assert hash(ground_rule) == hash(
+            Constraint(PredLiteral("p", Number(0)), PredLiteral("q"))
         )
-        self.assertEqual(
-            hash(var_rule),
-            hash(
-                Constraint(
-                    PredLiteral("p", Variable("X")),
-                    PredLiteral("q", Variable("X")),
-                )
-            ),
-        )
-        # ground
-        self.assertTrue(ground_rule.ground)
-        self.assertFalse(var_rule.ground)
-        # safety
-        self.assertTrue(ground_rule.safe)
-        self.assertTrue(var_rule.safe)
-        # contains aggregates
-        self.assertFalse(ground_rule.contains_aggregates)
-        self.assertFalse(var_rule.contains_aggregates)
-        self.assertTrue(
+        assert hash(var_rule) == hash(
             Constraint(
                 PredLiteral("p", Variable("X")),
-                AggrLiteral(AggrCount(), tuple(), Guard(RelOp.EQUAL, Number(1), False)),
-            ).contains_aggregates
+                PredLiteral("q", Variable("X")),
+            )
         )
+        # ground
+        assert ground_rule.ground
+        assert not var_rule.ground
+        # safety
+        assert ground_rule.safe
+        assert var_rule.safe
+        # contains aggregates
+        assert not ground_rule.contains_aggregates
+        assert not var_rule.contains_aggregates
+        assert Constraint(
+            PredLiteral("p", Variable("X")),
+            AggrLiteral(AggrCount(), tuple(), Guard(RelOp.EQUAL, Number(1), False)),
+        ).contains_aggregates
         # variables
-        self.assertTrue(ground_rule.vars() == ground_rule.global_vars() == set())
-        self.assertTrue(var_rule.vars() == var_rule.global_vars() == {Variable("X")})
+        assert ground_rule.vars() == ground_rule.global_vars() == set()
+        assert var_rule.vars() == var_rule.global_vars() == {Variable("X")}
         # replace arithmetic terms
-        self.assertEqual(
-            Constraint(PredLiteral("p", Number(0), Minus(Variable("X")))).replace_arith(
-                VariableTable()
-            ),
-            Constraint(
-                PredLiteral("p", Number(0), ArithVariable(0, Minus(Variable("X")))),
-            ),
+        assert Constraint(
+            PredLiteral("p", Number(0), Minus(Variable("X")))
+        ).replace_arith(VariableTable()) == Constraint(
+            PredLiteral("p", Number(0), ArithVariable(0, Minus(Variable("X")))),
         )
 
         # substitution
@@ -108,14 +88,11 @@ class TestConstraint(unittest.TestCase):
             PredLiteral("p", Variable("X"), Number(0)),
             PredLiteral("q", Variable("X")),
         )
-        self.assertEqual(
-            rule.substitute(
-                Substitution({Variable("X"): Number(1), Number(0): String("f")})
-            ),
-            Constraint(
-                PredLiteral("p", Number(1), Number(0)),
-                PredLiteral("q", Number(1)),
-            ),
+        assert rule.substitute(
+            Substitution({Variable("X"): Number(1), Number(0): String("f")})
+        ) == Constraint(
+            PredLiteral("p", Number(1), Number(0)),
+            PredLiteral("q", Number(1)),
         )  # NOTE: substitution is invalid
 
         # rewrite aggregates
@@ -155,95 +132,80 @@ class TestConstraint(unittest.TestCase):
         )
         aggr_map = dict()
 
-        self.assertEqual(rule.rewrite_aggregates(1, aggr_map), target_rule)
-        self.assertEqual(len(aggr_map), 2)
+        assert rule.rewrite_aggregates(1, aggr_map) == target_rule
+        assert len(aggr_map) == 2
 
         aggr_literal, alpha_literal, eps_rule, eta_rules = aggr_map[1]
-        self.assertEqual(aggr_literal, rule.body[1])
-        self.assertEqual(alpha_literal, target_rule.body[1])
-        self.assertEqual(
-            eps_rule,
-            AggrBaseRule(
-                AggrBaseLiteral(1, TermTuple(Variable("X")), TermTuple(Variable("X"))),
-                Guard(RelOp.GREATER_OR_EQ, Variable("X"), False),
-                None,
-                LiteralCollection(
-                    GreaterEqual(Variable("X"), AggrCount().base),
-                    PredLiteral("p", Variable("X"), Number(0)),
-                    PredLiteral("q", Variable("X")),
-                    Equal(Number(0), Variable("X")),
-                ),
+        assert aggr_literal == rule.body[1]
+        assert alpha_literal == target_rule.body[1]
+        assert eps_rule == AggrBaseRule(
+            AggrBaseLiteral(1, TermTuple(Variable("X")), TermTuple(Variable("X"))),
+            Guard(RelOp.GREATER_OR_EQ, Variable("X"), False),
+            None,
+            LiteralCollection(
+                GreaterEqual(Variable("X"), AggrCount().base),
+                PredLiteral("p", Variable("X"), Number(0)),
+                PredLiteral("q", Variable("X")),
+                Equal(Number(0), Variable("X")),
             ),
         )
-        self.assertEqual(len(eta_rules), 2)
-        self.assertEqual(
-            eta_rules[0],
-            AggrElemRule(
-                AggrElemLiteral(
-                    1,
-                    0,
-                    TermTuple(Variable("Y")),
-                    TermTuple(Variable("X")),
-                    TermTuple(Variable("Y"), Variable("X")),
-                ),
-                elements_1[0],
-                LiteralCollection(
-                    PredLiteral("p", Variable("X"), Number(0)),
-                    PredLiteral("p", Variable("Y")),
-                    PredLiteral("q", Variable("X")),
-                    Equal(Number(0), Variable("X")),
-                ),
+        assert len(eta_rules) == 2
+        assert eta_rules[0] == AggrElemRule(
+            AggrElemLiteral(
+                1,
+                0,
+                TermTuple(Variable("Y")),
+                TermTuple(Variable("X")),
+                TermTuple(Variable("Y"), Variable("X")),
+            ),
+            elements_1[0],
+            LiteralCollection(
+                PredLiteral("p", Variable("X"), Number(0)),
+                PredLiteral("p", Variable("Y")),
+                PredLiteral("q", Variable("X")),
+                Equal(Number(0), Variable("X")),
             ),
         )
-        self.assertEqual(
-            eta_rules[1],
-            AggrElemRule(
-                AggrElemLiteral(
-                    1,
-                    1,
-                    TermTuple(),
-                    TermTuple(Variable("X")),
-                    TermTuple(Variable("X")),
-                ),
-                elements_1[1],
-                LiteralCollection(
-                    PredLiteral("p", Variable("X"), Number(0)),
-                    PredLiteral("p", Number(0)),
-                    PredLiteral("q", Variable("X")),
-                    Equal(Number(0), Variable("X")),
-                ),
+        assert eta_rules[1] == AggrElemRule(
+            AggrElemLiteral(
+                1,
+                1,
+                TermTuple(),
+                TermTuple(Variable("X")),
+                TermTuple(Variable("X")),
+            ),
+            elements_1[1],
+            LiteralCollection(
+                PredLiteral("p", Variable("X"), Number(0)),
+                PredLiteral("p", Number(0)),
+                PredLiteral("q", Variable("X")),
+                Equal(Number(0), Variable("X")),
             ),
         )
 
         aggr_literal, alpha_literal, eps_rule, eta_rules = aggr_map[2]
-        self.assertEqual(aggr_literal, rule.body[-1])
-        self.assertEqual(alpha_literal, target_rule.body[-1])
-        self.assertEqual(
-            eps_rule,
-            AggrBaseRule(
-                AggrBaseLiteral(2, TermTuple(), TermTuple()),
-                None,
-                Guard(RelOp.LESS_OR_EQ, Number(0), True),
-                LiteralCollection(
-                    LessEqual(AggrCount().base, Number(0)),
-                    PredLiteral("p", Variable("X"), Number(0)),
-                    PredLiteral("q", Variable("X")),
-                    Equal(Number(0), Variable("X")),
-                ),
+        assert aggr_literal == rule.body[-1]
+        assert alpha_literal == target_rule.body[-1]
+        assert eps_rule == AggrBaseRule(
+            AggrBaseLiteral(2, TermTuple(), TermTuple()),
+            None,
+            Guard(RelOp.LESS_OR_EQ, Number(0), True),
+            LiteralCollection(
+                LessEqual(AggrCount().base, Number(0)),
+                PredLiteral("p", Variable("X"), Number(0)),
+                PredLiteral("q", Variable("X")),
+                Equal(Number(0), Variable("X")),
             ),
         )
-        self.assertEqual(len(eta_rules), 1)
-        self.assertEqual(
-            eta_rules[0],
-            AggrElemRule(
-                AggrElemLiteral(2, 0, TermTuple(), TermTuple(), TermTuple()),
-                elements_2[0],
-                LiteralCollection(
-                    PredLiteral("p", Variable("X"), Number(0)),
-                    PredLiteral("q", Number(0)),
-                    PredLiteral("q", Variable("X")),
-                    Equal(Number(0), Variable("X")),
-                ),
+        assert len(eta_rules) == 1
+        assert eta_rules[0] == AggrElemRule(
+            AggrElemLiteral(2, 0, TermTuple(), TermTuple(), TermTuple()),
+            elements_2[0],
+            LiteralCollection(
+                PredLiteral("p", Variable("X"), Number(0)),
+                PredLiteral("q", Number(0)),
+                PredLiteral("q", Variable("X")),
+                Equal(Number(0), Variable("X")),
             ),
         )
 
@@ -270,37 +232,11 @@ class TestConstraint(unittest.TestCase):
             ),
         )
 
-        self.assertEqual(
-            target_rule.assemble_aggregates(
-                {
-                    AggrPlaceholder(
-                        1, TermTuple(Variable("X")), TermTuple(Variable("X"))
-                    ): AggrLiteral(
-                        AggrCount(),
-                        (
-                            AggrElement(
-                                TermTuple(Number(0)),
-                                LiteralCollection(PredLiteral("p", Number(0))),
-                            ),
-                            AggrElement(TermTuple(String("f")), LiteralCollection()),
-                        ),
-                        Guard(RelOp.GREATER_OR_EQ, Number(-1), False),
-                    ),
-                    AggrPlaceholder(2, TermTuple(), TermTuple()): AggrLiteral(
-                        AggrCount(),
-                        (
-                            AggrElement(
-                                TermTuple(Number(0)),
-                                LiteralCollection(PredLiteral("q", Number(0))),
-                            ),
-                        ),
-                        Guard(RelOp.LESS_OR_EQ, Number(0), True),
-                    ),
-                }
-            ),
-            Constraint(
-                PredLiteral("p", Variable("X"), Number(0)),
-                AggrLiteral(
+        assert target_rule.assemble_aggregates(
+            {
+                AggrPlaceholder(
+                    1, TermTuple(Variable("X")), TermTuple(Variable("X"))
+                ): AggrLiteral(
                     AggrCount(),
                     (
                         AggrElement(
@@ -311,9 +247,7 @@ class TestConstraint(unittest.TestCase):
                     ),
                     Guard(RelOp.GREATER_OR_EQ, Number(-1), False),
                 ),
-                PredLiteral("q", Variable("X")),
-                Equal(Number(0), Variable("X")),
-                AggrLiteral(
+                AggrPlaceholder(2, TermTuple(), TermTuple()): AggrLiteral(
                     AggrCount(),
                     (
                         AggrElement(
@@ -323,11 +257,32 @@ class TestConstraint(unittest.TestCase):
                     ),
                     Guard(RelOp.LESS_OR_EQ, Number(0), True),
                 ),
+            }
+        ) == Constraint(
+            PredLiteral("p", Variable("X"), Number(0)),
+            AggrLiteral(
+                AggrCount(),
+                (
+                    AggrElement(
+                        TermTuple(Number(0)),
+                        LiteralCollection(PredLiteral("p", Number(0))),
+                    ),
+                    AggrElement(TermTuple(String("f")), LiteralCollection()),
+                ),
+                Guard(RelOp.GREATER_OR_EQ, Number(-1), False),
+            ),
+            PredLiteral("q", Variable("X")),
+            Equal(Number(0), Variable("X")),
+            AggrLiteral(
+                AggrCount(),
+                (
+                    AggrElement(
+                        TermTuple(Number(0)),
+                        LiteralCollection(PredLiteral("q", Number(0))),
+                    ),
+                ),
+                Guard(RelOp.LESS_OR_EQ, Number(0), True),
             ),
         )
 
         # TODO: propagate
-
-
-if __name__ == "__main__":  # pragma: no cover
-    unittest.main()

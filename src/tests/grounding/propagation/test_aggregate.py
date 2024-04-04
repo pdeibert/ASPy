@@ -1,4 +1,4 @@
-import unittest
+from typing import Self
 
 import aspy
 from aspy.grounding.propagation import AggrPropagator
@@ -21,11 +21,10 @@ from aspy.program.statements import AggrBaseRule, AggrElemRule, NormalRule
 from aspy.program.terms import Number, TermTuple, Variable
 
 
-class TestAggrPropagator(unittest.TestCase):
-    def test_aggr_propagator(self):
-
+class TestAggrPropagator:
+    def test_aggr_propagator(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         elements_1 = (
             AggrElement(
@@ -127,8 +126,8 @@ class TestAggrPropagator(unittest.TestCase):
             ),
         }
         propagator = AggrPropagator(aggr_map)
-        self.assertEqual(propagator.aggr_map, aggr_map)
-        self.assertEqual(propagator.instance_map, dict())
+        assert propagator.aggr_map == aggr_map
+        assert propagator.instance_map == dict()
 
         # propagation
         eps_instances = {
@@ -221,13 +220,10 @@ class TestAggrPropagator(unittest.TestCase):
         J_alpha = propagator.propagate(
             eps_instances, eta_instances, domain, domain, set()
         )
-        self.assertEqual(
-            J_alpha,
-            {
-                AggrPlaceholder(1, TermTuple(Variable("X")), TermTuple(Number(0))),
-                AggrPlaceholder(2, TermTuple(), TermTuple()),
-            },
-        )
+        assert J_alpha == {
+            AggrPlaceholder(1, TermTuple(Variable("X")), TermTuple(Number(0))),
+            AggrPlaceholder(2, TermTuple(), TermTuple()),
+        }
 
         # assembling
         rule = NormalRule(
@@ -239,11 +235,17 @@ class TestAggrPropagator(unittest.TestCase):
                 AggrPlaceholder(2, TermTuple(), TermTuple()),
             ],
         )
+        print(rule)
         rules = propagator.assemble({rule})
-        self.assertEqual(len(rules), 1)
-        self.assertTrue(
-            rules.pop()
-            == NormalRule(
+        assert len(rules) == 1
+
+        # TODO: variable X ???
+        # TODO: something goes wrong here, or is the test wrong???
+
+        rule = rules.pop()
+        print(rule)
+        print(
+            NormalRule(
                 PredLiteral("p", Variable("X"), Number(0)),
                 [
                     AggrLiteral(
@@ -274,7 +276,9 @@ class TestAggrPropagator(unittest.TestCase):
                     ),
                 ],
             )
-            or NormalRule(
+        )
+        print(
+            NormalRule(
                 PredLiteral("p", Variable("X"), Number(0)),
                 [
                     AggrLiteral(
@@ -306,7 +310,64 @@ class TestAggrPropagator(unittest.TestCase):
                 ],
             )
         )
-
-
-if __name__ == "__main__":  # pragma: no cover
-    unittest.main()
+        assert rule == NormalRule(
+            PredLiteral("p", Variable("X"), Number(0)),
+            [
+                AggrLiteral(
+                    AggrCount(),
+                    (
+                        AggrElement(
+                            TermTuple(Number(0)),
+                            LiteralCollection(PredLiteral("p", Number(0))),
+                        ),
+                        AggrElement(
+                            TermTuple(Number(1)),
+                            LiteralCollection(PredLiteral("p", Number(1))),
+                        ),
+                    ),  # first possible element order
+                    Guard(RelOp.GREATER_OR_EQ, Variable("X"), True),
+                ),
+                PredLiteral("q", Number(0)),
+                Equal(Number(0), Number(0)),
+                AggrLiteral(
+                    AggrCount(),
+                    (
+                        AggrElement(
+                            TermTuple(Number(0)),
+                            LiteralCollection(PredLiteral("q", Number(0))),
+                        ),
+                    ),
+                    Guard(RelOp.LESS_OR_EQ, Number(0), False),
+                ),
+            ],
+        ) or NormalRule(
+            PredLiteral("p", Variable("X"), Number(0)),
+            [
+                AggrLiteral(
+                    AggrCount(),
+                    (
+                        AggrElement(
+                            TermTuple(Number(1)),
+                            LiteralCollection(PredLiteral("p", Number(1))),
+                        ),
+                        AggrElement(
+                            TermTuple(Number(0)),
+                            LiteralCollection(PredLiteral("p", Number(0))),
+                        ),
+                    ),  # second possible element order
+                    Guard(RelOp.GREATER_OR_EQ, Variable("X"), True),
+                ),
+                PredLiteral("q", Number(0)),
+                Equal(Number(0), Number(0)),
+                AggrLiteral(
+                    AggrCount(),
+                    (
+                        AggrElement(
+                            TermTuple(Number(0)),
+                            LiteralCollection(PredLiteral("q", Number(0))),
+                        ),
+                    ),
+                    Guard(RelOp.LESS_OR_EQ, Number(0), False),
+                ),
+            ],
+        )

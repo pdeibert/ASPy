@@ -1,5 +1,6 @@
-import unittest
-from typing import Set
+from typing import Self, Set
+
+import pytest  # type: ignore
 
 import aspy
 from aspy.program.literals import (
@@ -31,18 +32,17 @@ from aspy.program.variable_table import VariableTable
 
 
 class DummyRule:
-    def __init__(self, vars: Set["Variable"]) -> None:
+    def __init__(self: Self, vars: Set["Variable"]) -> None:
         self.vars = vars
 
-    def global_vars(self) -> Set["Variable"]:
+    def global_vars(self: Self) -> Set["Variable"]:
         return self.vars
 
 
-class TestAggregate(unittest.TestCase):
-    def test_aggregate_element(self):
-
+class TestAggregate:
+    def test_aggregate_element(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         element = AggrElement(
             TermTuple(Number(5), Variable("X")),
@@ -52,61 +52,47 @@ class TestAggregate(unittest.TestCase):
             ),
         )
         # string representation
-        self.assertEqual(str(element), '5,X:p("str"),not q(Y)')
+        assert str(element) == '5,X:p("str"),not q(Y)'
         # equality
-        self.assertEqual(
-            element,
+        assert element == AggrElement(
+            TermTuple(Number(5), Variable("X")),
+            LiteralCollection(
+                PredLiteral("p", String("str")),
+                Naf(PredLiteral("q", Variable("Y"))),
+            ),
+        )
+        # head
+        assert element.head == TermTuple(Number(5), Variable("X"))
+        # body
+        assert element.body == LiteralCollection(
+            PredLiteral("p", String("str")),
+            Naf(PredLiteral("q", Variable("Y"))),
+        )
+        # hashing
+        assert hash(element) == hash(
             AggrElement(
                 TermTuple(Number(5), Variable("X")),
                 LiteralCollection(
                     PredLiteral("p", String("str")),
                     Naf(PredLiteral("q", Variable("Y"))),
                 ),
-            ),
-        )
-        # head
-        self.assertEqual(element.head, TermTuple(Number(5), Variable("X")))
-        # body
-        self.assertEqual(
-            element.body,
-            LiteralCollection(
-                PredLiteral("p", String("str")),
-                Naf(PredLiteral("q", Variable("Y"))),
-            ),
-        )
-        # hashing
-        self.assertEqual(
-            hash(element),
-            hash(
-                AggrElement(
-                    TermTuple(Number(5), Variable("X")),
-                    LiteralCollection(
-                        PredLiteral("p", String("str")),
-                        Naf(PredLiteral("q", Variable("Y"))),
-                    ),
-                )
-            ),
+            )
         )
         # ground
-        self.assertFalse(element.ground)
+        assert not element.ground
         # positive/negative literal occurrences
-        self.assertEqual(
-            element.pos_occ(), LiteralCollection(PredLiteral("p", String("str")))
-        )
-        self.assertEqual(
-            element.neg_occ(), LiteralCollection(PredLiteral("q", Variable("Y")))
-        )
+        assert element.pos_occ() == LiteralCollection(PredLiteral("p", String("str")))
+        assert element.neg_occ() == LiteralCollection(PredLiteral("q", Variable("Y")))
         # weight
-        self.assertEqual(element.weight, 5)
-        self.assertEqual(AggrElement(TermTuple(Variable("X"), Number(5))).weight, 0)
+        assert element.weight == 5
+        assert AggrElement(TermTuple(Variable("X"), Number(5))).weight == 0
         # vars
-        self.assertTrue(
-            element.vars() == element.global_vars() == {Variable("X"), Variable("Y")}
-        )
+        assert element.vars() == element.global_vars() == {Variable("X"), Variable("Y")}
         # safety
-        self.assertRaises(ValueError, element.safety)
+        with pytest.raises(ValueError):
+            element.safety()
         # replace arithmetic terms
-        self.assertEqual(element.replace_arith(VariableTable()), element)
+        assert element.replace_arith(VariableTable()) == element
         element = AggrElement(
             TermTuple(Number(5), Minus(Variable("X"))),
             LiteralCollection(
@@ -114,50 +100,44 @@ class TestAggregate(unittest.TestCase):
                 Naf(PredLiteral("q", Variable("Y"))),
             ),
         )
-        self.assertEqual(
-            element.replace_arith(VariableTable()),
-            AggrElement(
-                TermTuple(Number(5), ArithVariable(0, Minus(Variable("X")))),
-                LiteralCollection(
-                    PredLiteral("p", String("str")),
-                    Naf(PredLiteral("q", Variable("Y"))),
-                ),
+        assert element.replace_arith(VariableTable()) == AggrElement(
+            TermTuple(Number(5), ArithVariable(0, Minus(Variable("X")))),
+            LiteralCollection(
+                PredLiteral("p", String("str")),
+                Naf(PredLiteral("q", Variable("Y"))),
             ),
         )
 
         # substitute
-        self.assertEqual(
-            element.substitute(
-                Substitution({Variable("X"): Number(1), Number(5): String("f")})
-            ),  # NOTE: substitution is invalid
-            AggrElement(
-                TermTuple(Number(5), Number(-1)),
-                LiteralCollection(
-                    PredLiteral("p", String("str")),
-                    Naf(PredLiteral("q", Variable("Y"))),
-                ),
+        assert element.substitute(
+            Substitution({Variable("X"): Number(1), Number(5): String("f")})
+        ) == AggrElement(
+            TermTuple(Number(5), Number(-1)),
+            LiteralCollection(
+                PredLiteral("p", String("str")),
+                Naf(PredLiteral("q", Variable("Y"))),
             ),
-        )
+        )  # NOTE: substitution is invalid
         # match
-        self.assertRaises(Exception, element.match, element)
+        with pytest.raises(Exception):
+            element.match(element)
 
-    def test_aggregate_count(self):
-
+    def test_aggregate_count(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         aggr_func = AggrCount()
         # equality
-        self.assertEqual(aggr_func, AggrCount())
+        assert aggr_func == AggrCount()
         # hashing
-        self.assertEqual(hash(aggr_func), hash(AggrCount()))
+        assert hash(aggr_func) == hash(AggrCount())
         # string representation
-        self.assertEqual(str(aggr_func), "#count")
+        assert str(aggr_func) == "#count"
         # base value
-        self.assertEqual(aggr_func.base, Number(0))
+        assert aggr_func.base == Number(0)
         # evaluation
-        self.assertEqual(
-            aggr_func.eval({TermTuple(Number(5)), TermTuple(Number(-3))}), Number(2)
+        assert aggr_func.eval({TermTuple(Number(5)), TermTuple(Number(-3))}) == Number(
+            2
         )
 
         # ----- propagation -----
@@ -176,32 +156,24 @@ class TestAggregate(unittest.TestCase):
         A = {PredLiteral("p", Number(0))}
         B = {PredLiteral("p", Number(0)), PredLiteral("p", Number(1))}
         # I subset J
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.GREATER_OR_EQ, Number(1), True), None),
-                element_instances,
-                A,
-                B,
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.GREATER_OR_EQ, Number(1), True), None),
+            element_instances,
+            A,
+            B,
         )
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.GREATER, Number(1), True), None), element_instances, A, B
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.GREATER, Number(1), True), None), element_instances, A, B
         )
         # J subset I
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.GREATER_OR_EQ, Number(1), True), None),
-                element_instances,
-                B,
-                A,
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.GREATER_OR_EQ, Number(1), True), None),
+            element_instances,
+            B,
+            A,
         )
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.GREATER, Number(1), True), None), element_instances, B, A
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.GREATER, Number(1), True), None), element_instances, B, A
         )
 
         # <, <=
@@ -209,32 +181,24 @@ class TestAggregate(unittest.TestCase):
         A = {PredLiteral("p", Number(0))}
         B = {PredLiteral("p", Number(0)), PredLiteral("p", Number(1))}
         # I subset J
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.LESS_OR_EQ, Number(1), True), None),
-                element_instances,
-                A,
-                B,
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.LESS_OR_EQ, Number(1), True), None),
+            element_instances,
+            A,
+            B,
         )
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.LESS, Number(1), True), None), element_instances, A, B
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.LESS, Number(1), True), None), element_instances, A, B
         )
         # J subset I
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.LESS_OR_EQ, Number(1), True), None),
-                element_instances,
-                B,
-                A,
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.LESS_OR_EQ, Number(1), True), None),
+            element_instances,
+            B,
+            A,
         )
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.LESS, Number(1), True), None), element_instances, B, A
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.LESS, Number(1), True), None), element_instances, B, A
         )
 
         # =
@@ -242,16 +206,12 @@ class TestAggregate(unittest.TestCase):
         A = {PredLiteral("p", Number(0))}
         B = {PredLiteral("p", Number(0)), PredLiteral("p", Number(1))}
         # I subset J
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.EQUAL, Number(1), True), None), element_instances, A, B
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.EQUAL, Number(1), True), None), element_instances, A, B
         )
         # J subset I
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.EQUAL, Number(1), True), None), element_instances, B, A
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.EQUAL, Number(1), True), None), element_instances, B, A
         )
 
         # !=
@@ -259,38 +219,33 @@ class TestAggregate(unittest.TestCase):
         A = {PredLiteral("p", Number(0))}
         B = {PredLiteral("p", Number(0)), PredLiteral("p", Number(1))}
         # I subset J
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.UNEQUAL, Number(1), True), None), element_instances, A, B
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.UNEQUAL, Number(1), True), None), element_instances, A, B
         )
         # J subset I
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.UNEQUAL, Number(1), True), None), element_instances, B, A
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.UNEQUAL, Number(1), True), None), element_instances, B, A
         )
 
         # TODO: two different guards at a time
         # TODO: special cases?
 
-    def test_aggregate_sum(self):
-
+    def test_aggregate_sum(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         aggr_func = AggrSum()
         # equality
-        self.assertEqual(aggr_func, AggrSum())
+        assert aggr_func == AggrSum()
         # hashing
-        self.assertEqual(hash(aggr_func), hash(AggrSum()))
+        assert hash(aggr_func) == hash(AggrSum())
         # string representation
-        self.assertEqual(str(aggr_func), "#sum")
+        assert str(aggr_func) == "#sum"
         # base value
-        self.assertEqual(aggr_func.base, Number(0))
+        assert aggr_func.base == Number(0)
         # evaluation
-        self.assertEqual(
-            aggr_func.eval({TermTuple(Number(5)), TermTuple(Number(-3))}), Number(2)
+        assert aggr_func.eval({TermTuple(Number(5)), TermTuple(Number(-3))}) == Number(
+            2
         )
 
         # ----- propagation -----
@@ -312,38 +267,30 @@ class TestAggregate(unittest.TestCase):
             PredLiteral("p", Number(1)),
         }
         # I subset J
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.GREATER_OR_EQ, Number(1), True), None),
-                element_instances,
-                literals_I,
-                literals_J,
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.GREATER_OR_EQ, Number(1), True), None),
+            element_instances,
+            literals_I,
+            literals_J,
         )
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.GREATER, Number(1), True), None),
-                element_instances,
-                literals_I,
-                literals_J,
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.GREATER, Number(1), True), None),
+            element_instances,
+            literals_I,
+            literals_J,
         )
         # J subset I
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.GREATER_OR_EQ, Number(1), True), None),
-                element_instances,
-                literals_J,
-                literals_I,
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.GREATER_OR_EQ, Number(1), True), None),
+            element_instances,
+            literals_J,
+            literals_I,
         )
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.GREATER, Number(1), True), None),
-                element_instances,
-                literals_J,
-                literals_I,
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.GREATER, Number(1), True), None),
+            element_instances,
+            literals_J,
+            literals_I,
         )
 
         # <, <=
@@ -354,38 +301,30 @@ class TestAggregate(unittest.TestCase):
             PredLiteral("p", Number(1)),
         }
         # I subset J
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.LESS_OR_EQ, Number(1), True), None),
-                element_instances,
-                literals_I,
-                literals_J,
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.LESS_OR_EQ, Number(1), True), None),
+            element_instances,
+            literals_I,
+            literals_J,
         )
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.LESS, Number(1), True), None),
-                element_instances,
-                literals_I,
-                literals_J,
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.LESS, Number(1), True), None),
+            element_instances,
+            literals_I,
+            literals_J,
         )
         # J subset I
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.LESS_OR_EQ, Number(1), True), None),
-                element_instances,
-                literals_J,
-                literals_I,
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.LESS_OR_EQ, Number(1), True), None),
+            element_instances,
+            literals_J,
+            literals_I,
         )
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.LESS, Number(1), True), None),
-                element_instances,
-                literals_J,
-                literals_I,
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.LESS, Number(1), True), None),
+            element_instances,
+            literals_J,
+            literals_I,
         )
 
         # =
@@ -396,22 +335,18 @@ class TestAggregate(unittest.TestCase):
             PredLiteral("p", Number(1)),
         }
         # I subset J
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.EQUAL, Number(1), True), None),
-                element_instances,
-                literals_I,
-                literals_J,
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.EQUAL, Number(1), True), None),
+            element_instances,
+            literals_I,
+            literals_J,
         )
         # J subset I
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.EQUAL, Number(1), True), None),
-                element_instances,
-                literals_J,
-                literals_I,
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.EQUAL, Number(1), True), None),
+            element_instances,
+            literals_J,
+            literals_I,
         )
 
         # !=
@@ -422,44 +357,39 @@ class TestAggregate(unittest.TestCase):
             PredLiteral("p", Number(1)),
         }
         # I subset J
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.UNEQUAL, Number(1), True), None),
-                element_instances,
-                literals_I,
-                literals_J,
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.UNEQUAL, Number(1), True), None),
+            element_instances,
+            literals_I,
+            literals_J,
         )
         # J subset I
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.UNEQUAL, Number(1), True), None),
-                element_instances,
-                literals_J,
-                literals_I,
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.UNEQUAL, Number(1), True), None),
+            element_instances,
+            literals_J,
+            literals_I,
         )
 
         # TODO: two different guards at a time
         # TODO: special cases?
 
-    def test_aggregate_max(self):
-
+    def test_aggregate_max(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         aggr_func = AggrMax()
         # equality
-        self.assertEqual(aggr_func, AggrMax())
+        assert aggr_func == AggrMax()
         # hashing
-        self.assertEqual(hash(aggr_func), hash(AggrMax()))
+        assert hash(aggr_func) == hash(AggrMax())
         # string representation
-        self.assertEqual(str(aggr_func), "#max")
+        assert str(aggr_func) == "#max"
         # base value
-        self.assertEqual(aggr_func.base, Infimum())
+        assert aggr_func.base == Infimum()
         # evaluation
-        self.assertEqual(
-            aggr_func.eval({TermTuple(Number(5)), TermTuple(Number(-3))}), Number(5)
+        assert aggr_func.eval({TermTuple(Number(5)), TermTuple(Number(-3))}) == Number(
+            5
         )
 
         # ----- propagation -----
@@ -478,32 +408,24 @@ class TestAggregate(unittest.TestCase):
         A = {PredLiteral("p", Number(0))}
         B = {PredLiteral("p", Number(0)), PredLiteral("p", Number(1))}
         # I subset J
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.GREATER_OR_EQ, Number(1), True), None),
-                element_instances,
-                A,
-                B,
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.GREATER_OR_EQ, Number(1), True), None),
+            element_instances,
+            A,
+            B,
         )
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.GREATER, Number(1), True), None), element_instances, A, B
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.GREATER, Number(1), True), None), element_instances, A, B
         )
         # J subset I
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.GREATER_OR_EQ, Number(1), True), None),
-                element_instances,
-                B,
-                A,
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.GREATER_OR_EQ, Number(1), True), None),
+            element_instances,
+            B,
+            A,
         )
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.GREATER, Number(1), True), None), element_instances, B, A
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.GREATER, Number(1), True), None), element_instances, B, A
         )
 
         # <, <=
@@ -511,32 +433,24 @@ class TestAggregate(unittest.TestCase):
         A = {PredLiteral("p", Number(0))}
         B = {PredLiteral("p", Number(0)), PredLiteral("p", Number(1))}
         # I subset J
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.LESS_OR_EQ, Number(1), True), None),
-                element_instances,
-                A,
-                B,
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.LESS_OR_EQ, Number(1), True), None),
+            element_instances,
+            A,
+            B,
         )
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.LESS, Number(1), True), None), element_instances, A, B
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.LESS, Number(1), True), None), element_instances, A, B
         )
         # J subset I
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.LESS_OR_EQ, Number(1), True), None),
-                element_instances,
-                B,
-                A,
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.LESS_OR_EQ, Number(1), True), None),
+            element_instances,
+            B,
+            A,
         )
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.LESS, Number(1), True), None), element_instances, B, A
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.LESS, Number(1), True), None), element_instances, B, A
         )
 
         # =
@@ -544,16 +458,12 @@ class TestAggregate(unittest.TestCase):
         A = {PredLiteral("p", Number(0))}
         B = {PredLiteral("p", Number(0)), PredLiteral("p", Number(1))}
         # I subset J
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.EQUAL, Number(1), True), None), element_instances, A, B
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.EQUAL, Number(1), True), None), element_instances, A, B
         )
         # J subset I
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.EQUAL, Number(1), True), None), element_instances, B, A
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.EQUAL, Number(1), True), None), element_instances, B, A
         )
 
         # !=
@@ -561,38 +471,33 @@ class TestAggregate(unittest.TestCase):
         A = {PredLiteral("p", Number(0))}
         B = {PredLiteral("p", Number(0)), PredLiteral("p", Number(1))}
         # I subset J
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.UNEQUAL, Number(1), True), None), element_instances, A, B
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.UNEQUAL, Number(1), True), None), element_instances, A, B
         )
         # J subset I
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.UNEQUAL, Number(1), True), None), element_instances, B, A
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.UNEQUAL, Number(1), True), None), element_instances, B, A
         )
 
         # TODO: two different guards at a time
         # TODO: special cases?
 
-    def test_aggregate_min(self):
-
+    def test_aggregate_min(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         aggr_func = AggrMin()
         # equality
-        self.assertEqual(aggr_func, AggrMin())
+        assert aggr_func == AggrMin()
         # hashing
-        self.assertEqual(hash(aggr_func), hash(AggrMin()))
+        assert hash(aggr_func) == hash(AggrMin())
         # string representation
-        self.assertEqual(str(aggr_func), "#min")
+        assert str(aggr_func) == "#min"
         # base value
-        self.assertEqual(aggr_func.base, Supremum())
+        assert aggr_func.base == Supremum()
         # evaluation
-        self.assertEqual(
-            aggr_func.eval({TermTuple(Number(5)), TermTuple(Number(-3))}), Number(-3)
+        assert aggr_func.eval({TermTuple(Number(5)), TermTuple(Number(-3))}) == Number(
+            -3
         )
 
         # ----- propagation -----
@@ -611,32 +516,24 @@ class TestAggregate(unittest.TestCase):
         A = {PredLiteral("p", Number(0))}
         B = {PredLiteral("p", Number(0)), PredLiteral("p", Number(1))}
         # I subset J
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.GREATER_OR_EQ, Number(1), True), None),
-                element_instances,
-                A,
-                B,
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.GREATER_OR_EQ, Number(1), True), None),
+            element_instances,
+            A,
+            B,
         )
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.GREATER, Number(1), True), None), element_instances, A, B
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.GREATER, Number(1), True), None), element_instances, A, B
         )
         # J subset I
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.GREATER_OR_EQ, Number(1), True), None),
-                element_instances,
-                B,
-                A,
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.GREATER_OR_EQ, Number(1), True), None),
+            element_instances,
+            B,
+            A,
         )
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.GREATER, Number(1), True), None), element_instances, B, A
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.GREATER, Number(1), True), None), element_instances, B, A
         )
 
         # <, <=
@@ -644,32 +541,24 @@ class TestAggregate(unittest.TestCase):
         A = {PredLiteral("p", Number(0))}
         B = {PredLiteral("p", Number(0)), PredLiteral("p", Number(1))}
         # I subset J
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.LESS_OR_EQ, Number(1), True), None),
-                element_instances,
-                A,
-                B,
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.LESS_OR_EQ, Number(1), True), None),
+            element_instances,
+            A,
+            B,
         )
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.LESS, Number(1), True), None), element_instances, A, B
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.LESS, Number(1), True), None), element_instances, A, B
         )
         # J subset I
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.LESS_OR_EQ, Number(1), True), None),
-                element_instances,
-                B,
-                A,
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.LESS_OR_EQ, Number(1), True), None),
+            element_instances,
+            B,
+            A,
         )
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.LESS, Number(1), True), None), element_instances, B, A
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.LESS, Number(1), True), None), element_instances, B, A
         )
 
         # =
@@ -677,16 +566,12 @@ class TestAggregate(unittest.TestCase):
         A = {PredLiteral("p", Number(0))}
         B = {PredLiteral("p", Number(0)), PredLiteral("p", Number(1))}
         # I subset J
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.EQUAL, Number(1), True), None), element_instances, A, B
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.EQUAL, Number(1), True), None), element_instances, A, B
         )
         # J subset I
-        self.assertFalse(
-            aggr_func.propagate(
-                (Guard(RelOp.EQUAL, Number(1), True), None), element_instances, B, A
-            )
+        assert not aggr_func.propagate(
+            (Guard(RelOp.EQUAL, Number(1), True), None), element_instances, B, A
         )
 
         # !=
@@ -694,25 +579,20 @@ class TestAggregate(unittest.TestCase):
         A = {PredLiteral("p", Number(0))}
         B = {PredLiteral("p", Number(0)), PredLiteral("p", Number(1))}
         # I subset J
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.UNEQUAL, Number(1), True), None), element_instances, A, B
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.UNEQUAL, Number(1), True), None), element_instances, A, B
         )
         # J subset I
-        self.assertTrue(
-            aggr_func.propagate(
-                (Guard(RelOp.UNEQUAL, Number(1), True), None), element_instances, B, A
-            )
+        assert aggr_func.propagate(
+            (Guard(RelOp.UNEQUAL, Number(1), True), None), element_instances, B, A
         )
 
         # TODO: two different guards at a time
         # TODO: special cases?
 
-    def test_aggregate_literal(self):
-
+    def test_aggregate_literal(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         ground_elements = (
             AggrElement(
@@ -729,33 +609,26 @@ class TestAggregate(unittest.TestCase):
         aggr_func = AggrCount()
 
         # no guards
-        self.assertRaises(ValueError, AggrLiteral, aggr_func, ground_elements, tuple())
+        with pytest.raises(ValueError):
+            AggrLiteral(aggr_func, ground_elements, tuple())
         # left guard only
         ground_literal = AggrLiteral(
             aggr_func, ground_elements, guards=Guard(RelOp.LESS, Number(3), False)
         )
-        self.assertEqual(ground_literal.lguard, Guard(RelOp.LESS, Number(3), False))
-        self.assertEqual(ground_literal.rguard, None)
-        self.assertEqual(
-            ground_literal.guards, (Guard(RelOp.LESS, Number(3), False), None)
-        )
-        self.assertFalse(ground_literal.eval())
-        self.assertEqual(
-            str(ground_literal), '3 < #count{5:p("str"),not q;-3:not p("str")}'
-        )
+        assert ground_literal.lguard == Guard(RelOp.LESS, Number(3), False)
+        assert ground_literal.rguard is None
+        assert ground_literal.guards, (Guard(RelOp.LESS, Number(3), False), None)
+        assert not ground_literal.eval()
+        assert str(ground_literal) == '3 < #count{5:p("str"),not q;-3:not p("str")}'
         # right guard only
         ground_literal = AggrLiteral(
             aggr_func, ground_elements, Guard(RelOp.LESS, Number(3), True), naf=True
         )
-        self.assertEqual(ground_literal.lguard, None)
-        self.assertEqual(ground_literal.rguard, Guard(RelOp.LESS, Number(3), True))
-        self.assertEqual(
-            ground_literal.guards, (None, Guard(RelOp.LESS, Number(3), True))
-        )
-        self.assertTrue(ground_literal.eval())
-        self.assertEqual(
-            str(ground_literal), 'not #count{5:p("str"),not q;-3:not p("str")} < 3'
-        )
+        assert ground_literal.lguard is None
+        assert ground_literal.rguard == Guard(RelOp.LESS, Number(3), True)
+        assert ground_literal.guards == (None, Guard(RelOp.LESS, Number(3), True))
+        assert ground_literal.eval()
+        assert str(ground_literal) == 'not #count{5:p("str"),not q;-3:not p("str")} < 3'
         # both guards
         ground_literal = AggrLiteral(
             aggr_func,
@@ -765,16 +638,14 @@ class TestAggregate(unittest.TestCase):
                 Guard(RelOp.LESS, Number(3), True),
             ),
         )
-        self.assertEqual(ground_literal.lguard, Guard(RelOp.LESS, Number(3), False))
-        self.assertEqual(ground_literal.rguard, Guard(RelOp.LESS, Number(3), True))
-        self.assertEqual(
-            ground_literal.guards,
-            (Guard(RelOp.LESS, Number(3), False), Guard(RelOp.LESS, Number(3), True)),
+        assert ground_literal.lguard == Guard(RelOp.LESS, Number(3), False)
+        assert ground_literal.rguard == Guard(RelOp.LESS, Number(3), True)
+        assert ground_literal.guards == (
+            Guard(RelOp.LESS, Number(3), False),
+            Guard(RelOp.LESS, Number(3), True),
         )
-        self.assertFalse(ground_literal.eval())
-        self.assertEqual(
-            str(ground_literal), '3 < #count{5:p("str"),not q;-3:not p("str")} < 3'
-        )
+        assert not ground_literal.eval()
+        assert str(ground_literal) == '3 < #count{5:p("str"),not q;-3:not p("str")} < 3'
 
         var_elements = (
             AggrElement(
@@ -793,8 +664,16 @@ class TestAggregate(unittest.TestCase):
         )
 
         # equality
-        self.assertEqual(
-            ground_literal,
+        assert ground_literal == AggrLiteral(
+            aggr_func,
+            ground_elements,
+            guards=(
+                Guard(RelOp.LESS, Number(3), False),
+                Guard(RelOp.LESS, Number(3), True),
+            ),
+        )
+        # hashing
+        assert hash(ground_literal) == hash(
             AggrLiteral(
                 aggr_func,
                 ground_elements,
@@ -802,113 +681,80 @@ class TestAggregate(unittest.TestCase):
                     Guard(RelOp.LESS, Number(3), False),
                     Guard(RelOp.LESS, Number(3), True),
                 ),
-            ),
-        )
-        # hashing
-        self.assertEqual(
-            hash(ground_literal),
-            hash(
-                AggrLiteral(
-                    aggr_func,
-                    ground_elements,
-                    guards=(
-                        Guard(RelOp.LESS, Number(3), False),
-                        Guard(RelOp.LESS, Number(3), True),
-                    ),
-                )
-            ),
+            )
         )
         # ground
-        self.assertTrue(ground_literal.ground)
-        self.assertFalse(var_literal.ground)
+        assert ground_literal.ground
+        assert not var_literal.ground
         # negation
-        self.assertFalse(ground_literal.naf)
+        assert not ground_literal.naf
         ground_literal.set_naf()
-        self.assertTrue(ground_literal.naf)
+        assert ground_literal.naf
         ground_literal.set_naf(False)
-        self.assertFalse(ground_literal.naf)
+        assert not ground_literal.naf
         ground_literal.set_naf(True)
-        self.assertTrue(ground_literal.naf)
+        assert ground_literal.naf
         # variables
-        self.assertTrue(
+        assert (
             ground_literal.invars()
             == ground_literal.outvars()
             == ground_literal.vars()
             == ground_literal.global_vars()
             == set()
         )
-        self.assertEqual(var_literal.invars(), {Variable("X")})
-        self.assertEqual(var_literal.outvars(), {Variable("Y")})
-        self.assertEqual(var_literal.vars(), {Variable("X"), Variable("Y")})
-        self.assertEqual(var_literal.global_vars(), {Variable("Y")})
+        assert var_literal.invars() == {Variable("X")}
+        assert var_literal.outvars() == {Variable("Y")}
+        assert var_literal.vars() == {Variable("X"), Variable("Y")}
+        assert var_literal.global_vars() == {Variable("Y")}
         # positive/negative literal occurrences
-        self.assertEqual(
-            var_literal.pos_occ(), LiteralCollection(PredLiteral("p", Variable("X")))
+        assert var_literal.pos_occ() == LiteralCollection(
+            PredLiteral("p", Variable("X"))
         )
-        self.assertEqual(
-            var_literal.neg_occ(),
-            LiteralCollection(PredLiteral("p", String("str")), PredLiteral("q")),
+        assert var_literal.neg_occ() == LiteralCollection(
+            PredLiteral("p", String("str")), PredLiteral("q")
         )
 
         # safety characterization
-        self.assertEqual(
-            var_literal.safety(DummyRule({Variable("X")})),
-            SafetyTriplet(unsafe={Variable("X")}),
+        assert var_literal.safety(DummyRule({Variable("X")})) == SafetyTriplet(
+            unsafe={Variable("X")}
         )
-        self.assertEqual(
-            var_literal.safety(DummyRule({Variable("Y")})), SafetyTriplet()
-        )
-        self.assertEqual(
+        assert var_literal.safety(DummyRule({Variable("Y")})) == SafetyTriplet()
+        assert AggrLiteral(
+            aggr_func, var_elements, Guard(RelOp.LESS, Variable("X"), False)
+        ).safety(DummyRule({Variable("X")})) == SafetyTriplet(unsafe={Variable("X")})
+        assert (
             AggrLiteral(
                 aggr_func, var_elements, Guard(RelOp.LESS, Variable("X"), False)
-            ).safety(DummyRule({Variable("X")})),
-            SafetyTriplet(unsafe={Variable("X")}),
-        )
-        self.assertEqual(
-            AggrLiteral(
-                aggr_func, var_elements, Guard(RelOp.LESS, Variable("X"), False)
-            ).safety(DummyRule({Variable("Y")})),
-            SafetyTriplet(),
+            ).safety(DummyRule({Variable("Y")}))
+            == SafetyTriplet()
         )
         # aggr_global_invars = {'X'}
         # aggr_global_vars = {'X','Y'} -> unsafe
         # rules = { ('Y', {'X'}) }
-        self.assertEqual(
-            AggrLiteral(
-                aggr_func, var_elements, guards=Guard(RelOp.EQUAL, Variable("Y"), False)
-            ).safety(DummyRule({Variable("X"), Variable("Y")})),
-            SafetyTriplet(
-                unsafe={Variable("X"), Variable("Y")},
-                rules={SafetyRule(Variable("Y"), {Variable("X")})},
-            ),
+        assert AggrLiteral(
+            aggr_func, var_elements, guards=Guard(RelOp.EQUAL, Variable("Y"), False)
+        ).safety(DummyRule({Variable("X"), Variable("Y")})) == SafetyTriplet(
+            unsafe={Variable("X"), Variable("Y")},
+            rules={SafetyRule(Variable("Y"), {Variable("X")})},
         )
         # aggr_global_invars = {}
         # aggr_global_vars = {'Y'} -> unsafe
         # rules = { ('Y', {}) } -> makes 'Y' safe
-        self.assertEqual(
-            AggrLiteral(
-                aggr_func, var_elements, guards=Guard(RelOp.EQUAL, Variable("Y"), False)
-            ).safety(DummyRule({Variable("Y")})),
-            SafetyTriplet(safe={Variable("Y")}),
-        )
+        assert AggrLiteral(
+            aggr_func, var_elements, guards=Guard(RelOp.EQUAL, Variable("Y"), False)
+        ).safety(DummyRule({Variable("Y")})) == SafetyTriplet(safe={Variable("Y")})
         # aggr_global_invars = {'X'}
         # aggr_global_vars = {'X'} -> unsafe
         # rules = { ('X', {'X'}) } -> removes (without making 'X' safe)
-        self.assertEqual(
-            AggrLiteral(
-                aggr_func, var_elements, guards=Guard(RelOp.EQUAL, Variable("X"), False)
-            ).safety(DummyRule({Variable("X")})),
-            SafetyTriplet(unsafe={Variable("X")}),
-        )
+        assert AggrLiteral(
+            aggr_func, var_elements, guards=Guard(RelOp.EQUAL, Variable("X"), False)
+        ).safety(DummyRule({Variable("X")})) == SafetyTriplet(unsafe={Variable("X")})
         # aggr_global_invars = {}
         # aggr_global_vars = {'X'} -> unsafe
         # rules = { ('X', {}) } -> makes 'X' safe
-        self.assertEqual(
-            AggrLiteral(
-                aggr_func, var_elements, guards=Guard(RelOp.EQUAL, Variable("X"), False)
-            ).safety(DummyRule({Variable("Y")})),
-            SafetyTriplet(safe={Variable("X")}),
-        )
+        assert AggrLiteral(
+            aggr_func, var_elements, guards=Guard(RelOp.EQUAL, Variable("X"), False)
+        ).safety(DummyRule({Variable("Y")})) == SafetyTriplet(safe={Variable("X")})
         # TODO: safety characterization for case with two guards
 
         # replace arithmetic terms
@@ -928,53 +774,41 @@ class TestAggregate(unittest.TestCase):
                 Guard(RelOp.EQUAL, Minus(Variable("X")), True),
             )
         )
-        self.assertEqual(
-            arith_literal.replace_arith(VariableTable()),
-            Naf(
-                AggrLiteral(
-                    aggr_func,
-                    (
-                        AggrElement(
-                            TermTuple(Number(5)),
-                            LiteralCollection(
-                                PredLiteral(
-                                    "p", ArithVariable(0, Minus(Variable("X")))
-                                ),
-                                Naf(PredLiteral("q")),
-                            ),
+        assert arith_literal.replace_arith(VariableTable()) == Naf(
+            AggrLiteral(
+                aggr_func,
+                (
+                    AggrElement(
+                        TermTuple(Number(5)),
+                        LiteralCollection(
+                            PredLiteral("p", ArithVariable(0, Minus(Variable("X")))),
+                            Naf(PredLiteral("q")),
                         ),
                     ),
-                    Guard(RelOp.EQUAL, ArithVariable(1, Minus(Variable("X"))), True),
-                )
-            ),
+                ),
+                Guard(RelOp.EQUAL, ArithVariable(1, Minus(Variable("X"))), True),
+            )
         )
 
         # substitute
         var_literal = AggrLiteral(
             aggr_func, var_elements, Guard(RelOp.LESS, Variable("X"), False)
         )
-        self.assertEqual(
-            var_literal.substitute(
-                Substitution({Variable("X"): Number(1), Number(-3): String("f")})
-            ),  # NOTE: substitution is invalid
-            AggrLiteral(
-                AggrCount(),
-                (
-                    AggrElement(
-                        TermTuple(Number(5)),
-                        LiteralCollection(
-                            PredLiteral("p", Number(1)), Naf(PredLiteral("q"))
-                        ),
-                    ),
-                    AggrElement(
-                        TermTuple(Number(-3)),
-                        LiteralCollection(Naf(PredLiteral("p", String("str")))),
+        assert var_literal.substitute(
+            Substitution({Variable("X"): Number(1), Number(-3): String("f")})
+        ) == AggrLiteral(
+            AggrCount(),
+            (
+                AggrElement(
+                    TermTuple(Number(5)),
+                    LiteralCollection(
+                        PredLiteral("p", Number(1)), Naf(PredLiteral("q"))
                     ),
                 ),
-                guards=Guard(RelOp.LESS, Number(1), False),
+                AggrElement(
+                    TermTuple(Number(-3)),
+                    LiteralCollection(Naf(PredLiteral("p", String("str")))),
+                ),
             ),
-        )
-
-
-if __name__ == "__main__":  # pragma: no cover  # pragma: no cover
-    unittest.main()
+            guards=Guard(RelOp.LESS, Number(1), False),
+        )  # NOTE: substitution is invalid

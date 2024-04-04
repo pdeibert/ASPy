@@ -1,4 +1,6 @@
-import unittest
+from typing import Self
+
+import pytest  # type: ignore
 
 import aspy
 from aspy.program.safety_characterization import SafetyTriplet
@@ -18,356 +20,341 @@ from aspy.program.terms import (
 from aspy.program.variable_table import VariableTable
 
 
-class TestTerm(unittest.TestCase):
-    def test_infimum(self):
-
+class TestTerm:
+    def test_infimum(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         term = Infimum()
         # string representation
-        self.assertEqual(str(term), "#inf")
+        assert str(term) == "#inf"
         # equality
-        self.assertEqual(term, Infimum())
+        assert term == Infimum()
         # hashing
-        self.assertEqual(hash(term), hash(Infimum()))
+        assert hash(term) == hash(Infimum())
         # total order for terms
-        self.assertTrue(term.precedes(Number(0)))
+        assert term.precedes(Number(0))
         # ground
-        self.assertTrue(term.ground)
+        assert term.ground
         # variables
-        self.assertTrue(term.vars() == term.global_vars() == set())
+        assert term.vars() == term.global_vars() == set()
         # replace arithmetic terms
-        self.assertEqual(term.replace_arith(VariableTable()), term)
+        assert term.replace_arith(VariableTable()) == term
         # safety characterization
-        self.assertEqual(term.safety(), SafetyTriplet())
+        assert term.safety() == SafetyTriplet()
 
         # substitute
-        self.assertEqual(
-            Infimum().substitute(Substitution({Infimum(): Supremum()})), Infimum()
+        assert (
+            Infimum().substitute(Substitution({Infimum(): Supremum()})) == Infimum()
         )  # NOTE: substitution is invalid
         # match
-        self.assertEqual(Infimum().match(Supremum()), None)
-        self.assertEqual(Infimum().match(Infimum()), Substitution())
+        assert Infimum().match(Supremum()) is None
+        assert Infimum().match(Infimum()) == Substitution()
 
-    def test_supremum(self):
-
+    def test_supremum(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         term = Supremum()
         # string representation
-        self.assertEqual(str(term), "#sup")
+        assert str(term) == "#sup"
         # equality
-        self.assertEqual(term, Supremum())
+        assert term == Supremum()
         # hashing
-        self.assertEqual(hash(term), hash(Supremum()))
+        assert hash(term) == hash(Supremum())
         # total order for terms
-        self.assertTrue(term.precedes(Supremum()))
+        assert term.precedes(Supremum())
         # ground
-        self.assertTrue(term.ground)
+        assert term.ground
         # variables
-        self.assertTrue(term.vars() == term.global_vars() == set())
+        assert term.vars() == term.global_vars() == set()
         # replace arithmetic terms
-        self.assertEqual(term.replace_arith(VariableTable()), term)
+        assert term.replace_arith(VariableTable()) == term
         # safety characterization
-        self.assertEqual(term.safety(), SafetyTriplet())
+        assert term.safety() == SafetyTriplet()
 
         # substitute
-        self.assertEqual(
-            Supremum().substitute(Substitution({Supremum(): Infimum()})), Supremum()
+        assert (
+            Supremum().substitute(Substitution({Supremum(): Infimum()})) == Supremum()
         )  # NOTE: substitution is invalid
         # match
-        self.assertEqual(Supremum().match(Infimum()), None)
-        self.assertEqual(Supremum().match(Supremum()), Substitution())
+        assert Supremum().match(Infimum()) is None
+        assert Supremum().match(Supremum()) == Substitution()
 
-    def test_variable(self):
-
+    def test_variable(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         # invalid initialization
-        self.assertRaises(ValueError, Variable, "x")
+        with pytest.raises(ValueError):
+            Variable("x")
         # valid initialization
         term = Variable("X")
         # string representation
-        self.assertEqual(str(term), "X")
+        assert str(term) == "X"
         # equality
-        self.assertEqual(term, Variable("X"))
+        assert term == Variable("X")
         # hashing
-        self.assertEqual(hash(term), hash(Variable("X")))
+        assert hash(term) == hash(Variable("X"))
         # total order for terms
-        self.assertRaises(Exception, term.precedes, term)
+        with pytest.raises(Exception):
+            term.precedes(term)
         # ground
-        self.assertFalse(term.ground)
+        assert not term.ground
         # variables
-        self.assertTrue(term.vars() == term.global_vars() == {term})
+        assert term.vars() == term.global_vars() == {term}
         # replace arithmetic terms
-        self.assertEqual(term.replace_arith(VariableTable()), term)
+        assert term.replace_arith(VariableTable()) == term
         # safety characterization
-        self.assertEqual(term.safety(), SafetyTriplet({term}))
+        assert term.safety() == SafetyTriplet({term})
         # simplify
-        self.assertEqual(term.simplify(), term)
+        assert term.simplify() == term
 
         # substitute
-        self.assertEqual(
-            Variable("X").substitute(Substitution({Variable("Y"): Number(0)})),
-            Variable("X"),
-        )
-        self.assertEqual(
-            Variable("X").substitute(Substitution({Variable("X"): Number(0)})),
-            Number(0),
-        )
+        assert Variable("X").substitute(
+            Substitution({Variable("Y"): Number(0)})
+        ) == Variable("X")
+        assert Variable("X").substitute(
+            Substitution({Variable("X"): Number(0)})
+        ) == Number(0)
         # match
-        self.assertEqual(Variable("X").match(Variable("X")), Substitution())
-        self.assertEqual(
-            Variable("X").match(Number(1)), Substitution({Variable("X"): Number(1)})
+        assert Variable("X").match(Variable("X")) == Substitution()
+        assert Variable("X").match(Number(1)) == Substitution(
+            {Variable("X"): Number(1)}
         )
 
-    def test_anon_variable(self):
-
+    def test_anon_variable(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         # invalid initialization
-        self.assertRaises(ValueError, AnonVariable, -1)
+        with pytest.raises(ValueError):
+            AnonVariable(-1)
         # valid initialization
         term = AnonVariable(0)
         # string representation
-        self.assertEqual(str(term), "_0")
+        assert str(term) == "_0"
         # equality
-        self.assertEqual(term, AnonVariable(0))
+        assert term == AnonVariable(0)
         # hashing
-        self.assertEqual(hash(term), hash(AnonVariable(0)))
+        assert hash(term) == hash(AnonVariable(0))
         # total order for terms
-        self.assertRaises(Exception, term.precedes, term)
+        with pytest.raises(Exception):
+            term.precedes(term)
         # ground
-        self.assertFalse(term.ground)
+        assert not term.ground
         # variables
-        self.assertTrue(term.vars() == term.global_vars() == {term})
+        assert term.vars() == term.global_vars() == {term}
         # replace arithmetic terms
-        self.assertEqual(term.replace_arith(VariableTable()), term)
+        assert term.replace_arith(VariableTable()) == term
         # safety characterization
-        self.assertEqual(term.safety(), SafetyTriplet({term}))
+        assert term.safety() == SafetyTriplet({term})
         # simplify
-        self.assertEqual(term.simplify(), term)
+        assert term.simplify() == term
 
         # substitute
-        self.assertEqual(
-            AnonVariable(0).substitute(Substitution({AnonVariable(1): Number(0)})),
-            AnonVariable(0),
-        )
-        self.assertEqual(
-            AnonVariable(0).substitute(Substitution({AnonVariable(0): Number(0)})),
-            Number(0),
-        )
+        assert AnonVariable(0).substitute(
+            Substitution({AnonVariable(1): Number(0)})
+        ) == AnonVariable(0)
+        assert AnonVariable(0).substitute(
+            Substitution({AnonVariable(0): Number(0)})
+        ) == Number(0)
         # match
-        self.assertEqual(AnonVariable(0).match(AnonVariable(0)), Substitution())
-        self.assertEqual(
-            AnonVariable(0).match(Number(1)), Substitution({AnonVariable(0): Number(1)})
+        assert AnonVariable(0).match(AnonVariable(0)) == Substitution()
+        assert AnonVariable(0).match(Number(1)) == Substitution(
+            {AnonVariable(0): Number(1)}
         )
 
-    def test_number(self):
-
+    def test_number(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         term = Number(5)
         # string representation
-        self.assertEqual(str(term), "5")
+        assert str(term) == "5"
         # equality
-        self.assertEqual(term, Number(5))
+        assert term == Number(5)
         # hashing
-        self.assertEqual(hash(term), hash(Number(5)))
+        assert hash(term) == hash(Number(5))
         # evaluation
-        self.assertEqual(term.eval(), 5)
+        assert term.eval() == 5
         # total order for terms
-        self.assertFalse(term.precedes(Number(4)))
-        self.assertTrue(term.precedes(Number(5)))
-        self.assertRaises(ValueError, term.precedes, Variable("X"))
+        assert not term.precedes(Number(4))
+        assert term.precedes(Number(5))
+        with pytest.raises(ValueError):
+            term.precedes(Variable("X"))
         # ground
-        self.assertTrue(term.ground)
+        assert term.ground
         # variables
-        self.assertTrue(term.vars() == term.global_vars() == set())
+        assert term.vars() == term.global_vars() == set()
         # negation
-        self.assertEqual(-term, Number(-5))
+        assert -term == Number(-5)
         # absolute value
-        self.assertTrue(abs(term) == abs(Number(-5)) == Number(5))
+        assert abs(term) == abs(Number(-5)) == Number(5)
         # replace arithmetic terms
-        self.assertEqual(term.replace_arith(VariableTable()), term)
+        assert term.replace_arith(VariableTable()) == term
         # safety characterization
-        self.assertEqual(term.safety(), SafetyTriplet())
+        assert term.safety() == SafetyTriplet()
         # simplify
-        self.assertEqual(term.simplify(), term)
+        assert term.simplify() == term
 
         # operators
-        self.assertEqual(term + Number(2), Number(7))
-        self.assertEqual(term - Number(2), Number(3))
-        self.assertEqual(term * Number(2), Number(10))
-        self.assertEqual(term // Number(2), Number(2))
+        assert (term + Number(2)) == Number(7)
+        assert (term - Number(2)) == Number(3)
+        assert (term * Number(2)) == Number(10)
+        assert (term // Number(2)) == Number(2)
 
         # substitute
-        self.assertEqual(
-            Number(0).substitute(Substitution({Number(0): Number(1)})), Number(0)
+        assert Number(0).substitute(Substitution({Number(0): Number(1)})) == Number(
+            0
         )  # NOTE: substitution is invalid
         # match
-        self.assertEqual(Number(0).match(Number(1)), None)
-        self.assertEqual(Number(0).match(Number(0)), Substitution())
+        assert Number(0).match(Number(1)) is None
+        assert Number(0).match(Number(0)) == Substitution()
 
-    def test_symbolic_constant(self):
-
+    def test_symbolic_constant(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         # invalid initialization
-        self.assertRaises(ValueError, SymbolicConstant, "1")
-        self.assertRaises(ValueError, SymbolicConstant, "Z")
+        with pytest.raises(ValueError):
+            SymbolicConstant("1")
+        with pytest.raises(ValueError):
+            SymbolicConstant("Z")
 
         term = SymbolicConstant("b")
         # string representation
-        self.assertEqual(str(term), "b")
+        assert str(term) == "b"
         # equality
-        self.assertEqual(term, SymbolicConstant("b"))
+        assert term == SymbolicConstant("b")
         # hashing
-        self.assertEqual(hash(term), hash(SymbolicConstant("b")))
+        assert hash(term) == hash(SymbolicConstant("b"))
         # total order for terms
-        self.assertFalse(term.precedes(Infimum()))
-        self.assertFalse(term.precedes(SymbolicConstant("a")))
-        self.assertTrue(term.precedes(SymbolicConstant("b")))
-        self.assertTrue(term.precedes(Supremum()))
-        self.assertRaises(ValueError, term.precedes, Variable("X"))
+        assert not term.precedes(Infimum())
+        assert not term.precedes(SymbolicConstant("a"))
+        assert term.precedes(SymbolicConstant("b"))
+        assert term.precedes(Supremum())
+        with pytest.raises(ValueError):
+            term.precedes(Variable("X"))
         # ground
-        self.assertTrue(term.ground)
+        assert term.ground
         # variables
-        self.assertTrue(term.vars() == term.global_vars() == set())
+        assert term.vars() == term.global_vars() == set()
         # replace arithmetic terms
-        self.assertEqual(term.replace_arith(VariableTable()), term)
+        assert term.replace_arith(VariableTable()) == term
         # safety characterization
-        self.assertEqual(term.safety(), SafetyTriplet())
+        assert term.safety() == SafetyTriplet()
 
         # substitute
-        self.assertEqual(
-            SymbolicConstant("f").substitute(
-                Substitution({SymbolicConstant("f"): Number(0)})
-            ),
-            SymbolicConstant("f"),
+        assert SymbolicConstant("f").substitute(
+            Substitution({SymbolicConstant("f"): Number(0)})
+        ) == SymbolicConstant(
+            "f"
         )  # NOTE: substitution is invalid
         # match
-        self.assertEqual(SymbolicConstant("a").match(SymbolicConstant("b")), None)
-        self.assertEqual(
-            SymbolicConstant("a").match(SymbolicConstant("a")), Substitution()
-        )
+        assert SymbolicConstant("a").match(SymbolicConstant("b")) is None
+        assert SymbolicConstant("a").match(SymbolicConstant("a")) == Substitution()
 
-    def test_string(self):
-
+    def test_string(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         term = String("!?$#b")
         # string representation
-        self.assertEqual(str(term), '"!?$#b"')
+        assert str(term) == '"!?$#b"'
         # equality
-        self.assertEqual(term, String("!?$#b"))
+        assert term == String("!?$#b")
         # hashing
-        self.assertEqual(hash(term), hash(String("!?$#b")))
+        assert hash(term) == hash(String("!?$#b"))
         # total order for terms
-        self.assertFalse(term.precedes(Infimum()))
-        self.assertFalse(term.precedes(String("!?$#a")))
-        self.assertTrue(term.precedes(String("!?$#b")))
-        self.assertTrue(term.precedes(Supremum()))
-        self.assertRaises(ValueError, term.precedes, Variable("X"))
+        assert not term.precedes(Infimum())
+        assert not term.precedes(String("!?$#a"))
+        assert term.precedes(String("!?$#b"))
+        assert term.precedes(Supremum())
+
+        with pytest.raises(ValueError):
+            term.precedes(Variable("X"))
         # ground
-        self.assertTrue(term.ground)
+        assert term.ground
         # variables
-        self.assertTrue(term.vars() == term.global_vars() == set())
+        assert term.vars() == term.global_vars() == set()
         # replace arithmetic terms
-        self.assertEqual(term.replace_arith(VariableTable()), term)
+        assert term.replace_arith(VariableTable()) == term
         # safety characterization
-        self.assertEqual(term.safety(), SafetyTriplet())
+        assert term.safety() == SafetyTriplet()
 
         # substitute
-        self.assertEqual(
-            String("f").substitute(Substitution({String("f"): Number(0)})), String("f")
+        assert String("f").substitute(Substitution({String("f"): Number(0)})) == String(
+            "f"
         )  # NOTE: substitution is invalid
         # match
-        self.assertEqual(String("a").match(String("b")), None)
-        self.assertEqual(String("a").match(String("a")), Substitution())
+        assert String("a").match(String("b")) is None
+        assert String("a").match(String("a")) == Substitution()
 
-    def test_term_tuple(self):
-
+    def test_term_tuple(self: Self):
         # make sure debug mode is enabled
-        self.assertTrue(aspy.debug())
+        assert aspy.debug()
 
         terms = TermTuple(Number(0), Variable("X"))
         # length
-        self.assertEqual(len(terms), 2)
+        assert len(terms) == 2
         # equality
-        self.assertEqual(terms[0], Number(0))
-        self.assertEqual(terms[1], Variable("X"))
-        self.assertTrue(terms == TermTuple(Number(0), Variable("X")))
+        assert terms[0] == Number(0)
+        assert terms[1] == Variable("X")
+        assert terms == TermTuple(Number(0), Variable("X"))
         # hashing
-        self.assertEqual(hash(terms), hash(TermTuple(Number(0), Variable("X"))))
+        assert hash(terms) == hash(TermTuple(Number(0), Variable("X")))
         # ground
-        self.assertFalse(terms.ground)
+        assert not terms.ground
         # variables
-        self.assertTrue(terms.vars() == terms.global_vars() == {Variable("X")})
+        assert terms.vars() == terms.global_vars() == {Variable("X")}
         # replace arithmetic terms
-        self.assertEqual(
-            TermTuple(Number(0), Minus(Variable("X"))).replace_arith(VariableTable()),
-            TermTuple(Number(0), ArithVariable(0, Minus(Variable("X")))),
-        )
+        assert TermTuple(Number(0), Minus(Variable("X"))).replace_arith(
+            VariableTable()
+        ) == TermTuple(Number(0), ArithVariable(0, Minus(Variable("X"))))
         # safety characterization
-        self.assertEqual(terms.safety(), (terms[0].safety(), terms[1].safety()))
+        assert terms.safety() == (terms[0].safety(), terms[1].safety())
 
         # substitute
-        self.assertEqual(
-            TermTuple(String("f"), Variable("X")).substitute(
-                Substitution({String("f"): Number(0), Variable("X"): Number(1)})
-            ),
-            TermTuple(String("f"), Number(1)),
+        assert TermTuple(String("f"), Variable("X")).substitute(
+            Substitution({String("f"): Number(0), Variable("X"): Number(1)})
+        ) == TermTuple(
+            String("f"), Number(1)
         )  # NOTE: substitution is invalid
         # match
-        self.assertEqual(
-            TermTuple(Variable("X"), String("f")).match(
-                TermTuple(Number(1), String("f"))
-            ),
-            Substitution({Variable("X"): Number(1)}),
-        )
-        self.assertEqual(
+        assert TermTuple(Variable("X"), String("f")).match(
+            TermTuple(Number(1), String("f"))
+        ) == Substitution({Variable("X"): Number(1)})
+        assert (
             TermTuple(Variable("X"), String("f")).match(
                 TermTuple(Number(1), String("g"))
-            ),
-            None,
+            )
+            is None
         )  # ground terms don't match
-        self.assertEqual(
+        assert (
             TermTuple(Variable("X"), Variable("X"), String("f")).match(
                 TermTuple(Number(1), String("f"))
-            ),
-            None,
+            )
+            is None
         )  # wrong length
-        self.assertEqual(
+        assert (
             TermTuple(Variable("X"), Variable("X")).match(
                 TermTuple(Number(1), String("f"))
-            ),
-            None,
+            )
+            is None
         )  # assignment conflict
 
         # combining terms
-        self.assertEqual(
-            terms + TermTuple(String("")),
-            TermTuple(Number(0), Variable("X"), String("")),
+        assert terms + TermTuple(String("")) == TermTuple(
+            Number(0), Variable("X"), String("")
         )
         # (positive/negative) weight
-        self.assertEqual(TermTuple(Number(-3)).weight, -3)
-        self.assertEqual(TermTuple(Number(3)).weight, 3)
-        self.assertEqual(TermTuple(String("f")).weight, 0)
-        self.assertEqual(TermTuple(Number(-3)).pos_weight, 0)
-        self.assertEqual(TermTuple(Number(3)).pos_weight, 3)
-        self.assertEqual(TermTuple(String("f")).pos_weight, 0)
-        self.assertEqual(TermTuple(Number(-3)).neg_weight, -3)
-        self.assertEqual(TermTuple(Number(33)).neg_weight, 0)
-        self.assertEqual(TermTuple(String("f")).neg_weight, 0)
-
-
-if __name__ == "__main__":  # pragma: no cover
-    unittest.main()
+        assert TermTuple(Number(-3)).weight == -3
+        assert TermTuple(Number(3)).weight == 3
+        assert TermTuple(String("f")).weight == 0
+        assert TermTuple(Number(-3)).pos_weight == 0
+        assert TermTuple(Number(3)).pos_weight == 3
+        assert TermTuple(String("f")).pos_weight == 0
+        assert TermTuple(Number(-3)).neg_weight == -3
+        assert TermTuple(Number(33)).neg_weight == 0
+        assert TermTuple(String("f")).neg_weight == 0
