@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import TYPE_CHECKING, Dict, List, Set, Tuple
+from typing import TYPE_CHECKING, Dict, List, Self, Set, Tuple
 
 from aspy.program.literals import AggrLiteral, AggrPlaceholder
 from aspy.program.statements import AggrBaseRule, AggrElemRule
@@ -11,7 +11,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class AggrPropagator:
     def __init__(
-        self,
+        self: Self,
         aggr_map: Dict[
             int,
             Tuple["AggrLiteral", "AggrPlaceholder", AggrBaseRule, List[AggrElemRule]],
@@ -21,16 +21,14 @@ class AggrPropagator:
         self.instance_map = dict()
 
     def propagate(
-        self,
+        self: Self,
         eps_instances,
         eta_instances,
         literals_I: Set["Literal"],
         literals_J: Set["Literal"],
         literals_J_alpha: Set["Literal"],
     ) -> Set[AggrPlaceholder]:
-
         for rule in chain(eps_instances, eta_instances):
-
             # get corresponding alpha_literal
             aggr_literal, alpha_literal, *_ = self.aggr_map[rule.ref_id]
 
@@ -91,7 +89,7 @@ class AggrPropagator:
 
         return possible_alpha_literals
 
-    def assemble(self, statements: Set["Statement"]) -> Set["Statement"]:
+    def assemble(self: Self, statements: Set["Statement"]) -> Set["Statement"]:
         # map ground alpha literals to corresponding
         # assembled aggr. literals to be replaced with
         assembling_map = {

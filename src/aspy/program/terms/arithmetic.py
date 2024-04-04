@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any, Optional, Self, Set, Tuple, Union
 
 from aspy.program.operators import ArithOp
 from aspy.program.safety_characterization import SafetyTriplet
@@ -28,7 +28,7 @@ class ArithTerm(Term, ABC):
         operands: Tuple consisting of the left and right operands.
     """  # noqa
 
-    def precedes(self, other: Term) -> bool:
+    def precedes(self: Self, other: Term) -> bool:
         """Checks precendence of w.r.t. a given term.
 
         To compute precedence, the arithmetic term is evaluated first.
@@ -53,7 +53,7 @@ class ArithTerm(Term, ABC):
         return Number(self.eval()).precedes(other)
 
     @abstractmethod  # pragma: no cover
-    def simplify(self) -> Union["ArithTerm", "Number", "Variable"]:
+    def simplify(self: Self) -> Union["ArithTerm", "Number", "Variable"]:
         """Simplifies the arithmetic term.
 
         Returns:
@@ -71,10 +71,10 @@ class ArithTerm(Term, ABC):
         pass
 
     @property
-    def operands(self) -> Tuple[Term, Term]:
+    def operands(self: Self) -> Tuple[Term, Term]:
         return (self.loperand, self.roperand)
 
-    def vars(self) -> Set["Variable"]:
+    def vars(self: Self) -> Set["Variable"]:
         """Returns the variables associated with the arithmetic term.
 
         Returns:
@@ -83,7 +83,7 @@ class ArithTerm(Term, ABC):
         return set().union(*tuple(operand.vars() for operand in self.operands))
 
     def safety(
-        self, statement: Optional[Union["Statement", "Query"]] = None
+        self: Self, statement: Optional[Union["Statement", "Query"]] = None
     ) -> SafetyTriplet:
         """Returns the the safety characterizations for the arithmetic term.
 
@@ -101,7 +101,7 @@ class ArithTerm(Term, ABC):
         )
 
     def replace_arith(
-        self, var_table: "VariableTable"
+        self: Self, var_table: "VariableTable"
     ) -> Union["ArithTerm", ArithVariable, "Number", "Variable"]:
         """Replaces arithmetic terms appearing in the operand(s).
 
@@ -122,7 +122,7 @@ class ArithTerm(Term, ABC):
         # replace non-ground arithmetic term with a new special variable
         return var_table.create(SpecialChar.TAU.value, orig_term=self, register=False)
 
-    def match(self, other: "Expr") -> Optional["Substitution"]:
+    def match(self: Self, other: "Expr") -> Optional["Substitution"]:
         """Tries to match the term tuple with an expression.
 
         Can only be matched with a ground arithmetic term or a number.
@@ -146,7 +146,7 @@ class ArithTerm(Term, ABC):
 
         return Substitution()
 
-    def substitute(self, subst: "Substitution") -> "ArithTerm":
+    def substitute(self: Self, subst: "Substitution") -> "ArithTerm":
         """Applies a substitution to the term term tuple.
 
         Substitutes all terms recursively.
@@ -175,7 +175,7 @@ class Minus(ArithTerm):
         operands: Tuple consisting of the (single) operand.
     """
 
-    def __init__(self, operand: Union[ArithTerm, Number, "Variable"]) -> None:
+    def __init__(self: Self, operand: Union[ArithTerm, Number, "Variable"]) -> None:
         """Initializes the arithmetic term.
 
         Args:
@@ -183,7 +183,7 @@ class Minus(ArithTerm):
         """  # noqa
         self.operand = operand
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the term to a given object.
 
         Considered equal if the given object is also a `Minus` instance with same operand.
@@ -196,10 +196,10 @@ class Minus(ArithTerm):
         """  # noqa
         return isinstance(other, Minus) and self.operand == other.operand
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("minus", self.operand))
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the arithmetic term.
 
         Returns:
@@ -215,14 +215,14 @@ class Minus(ArithTerm):
         return f"-{operand_str}"
 
     @cached_property
-    def ground(self) -> bool:
+    def ground(self: Self) -> bool:
         return self.operand.ground
 
     @property
-    def operands(self) -> Tuple[Term]:
+    def operands(self: Self) -> Tuple[Term]:
         return (self.operand,)
 
-    def eval(self) -> int:
+    def eval(self: Self) -> int:
         """Evaluates the arithmetic term.
 
         Operands must be ground to perform evaluation.
@@ -238,7 +238,7 @@ class Minus(ArithTerm):
 
         return -self.operand.eval()
 
-    def simplify(self) -> Union["ArithTerm", "Number", "Variable"]:
+    def simplify(self: Self) -> Union["ArithTerm", "Number", "Variable"]:
         """Simplifies the arithmetic term.
 
         First the operand is simplified.
@@ -273,7 +273,7 @@ class Add(ArithTerm):
     """
 
     def __init__(
-        self,
+        self: Self,
         loperand: Union[ArithTerm, Number, "Variable"],
         roperand: Union[ArithTerm, Number, "Variable"],
     ) -> None:
@@ -286,7 +286,7 @@ class Add(ArithTerm):
         self.loperand = loperand
         self.roperand = roperand
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the term to a given object.
 
         Considered equal if the given object is also an `Add` instance with same operands.
@@ -303,10 +303,10 @@ class Add(ArithTerm):
             and self.roperand == other.roperand
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("add", self.loperand, self.roperand))
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the arithmetic term.
 
         Returns:
@@ -327,10 +327,10 @@ class Add(ArithTerm):
         return f"{loperand_str}+{roperand_str}"
 
     @cached_property
-    def ground(self) -> bool:
+    def ground(self: Self) -> bool:
         return self.loperand.ground and self.roperand.ground
 
-    def eval(self) -> int:
+    def eval(self: Self) -> int:
         """Evaluates the arithmetic term.
 
         Operands must be ground to perform evaluation.
@@ -346,7 +346,7 @@ class Add(ArithTerm):
 
         return self.loperand.eval() + self.roperand.eval()
 
-    def simplify(self) -> Union[ArithTerm, "Number", "Variable"]:
+    def simplify(self: Self) -> Union[ArithTerm, "Number", "Variable"]:
         """Simplifies the arithmetic term.
 
         First the operands are simplified.
@@ -391,7 +391,7 @@ class Sub(ArithTerm):
     """
 
     def __init__(
-        self,
+        self: Self,
         loperand: Union[ArithTerm, Number, "Variable"],
         roperand: Union[ArithTerm, Number, "Variable"],
     ) -> None:
@@ -404,7 +404,7 @@ class Sub(ArithTerm):
         self.loperand = loperand
         self.roperand = roperand
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the term to a given object.
 
         Considered equal if the given object is also a `Sub` instance with same operands.
@@ -421,10 +421,10 @@ class Sub(ArithTerm):
             and self.roperand == other.roperand
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("sub", self.loperand, self.roperand))
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the arithmetic term.
 
         Returns:
@@ -445,10 +445,10 @@ class Sub(ArithTerm):
         return f"{loperand_str}-{roperand_str}"
 
     @cached_property
-    def ground(self) -> bool:
+    def ground(self: Self) -> bool:
         return self.loperand.ground and self.roperand.ground
 
-    def eval(self) -> int:
+    def eval(self: Self) -> int:
         """Evaluates the arithmetic term.
 
         Operands must be ground to perform evaluation.
@@ -464,7 +464,7 @@ class Sub(ArithTerm):
 
         return self.loperand.eval() - self.roperand.eval()
 
-    def simplify(self) -> Union["ArithTerm", Number, "Variable"]:
+    def simplify(self: Self) -> Union["ArithTerm", Number, "Variable"]:
         """Simplifies the arithmetic term.
 
         First the operands are simplified.
@@ -510,7 +510,7 @@ class Mult(ArithTerm):
     """
 
     def __init__(
-        self,
+        self: Self,
         loperand: Union[ArithTerm, Number, "Variable"],
         roperand: Union[ArithTerm, Number, "Variable"],
     ) -> None:
@@ -523,7 +523,7 @@ class Mult(ArithTerm):
         self.loperand = loperand
         self.roperand = roperand
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the term to a given object.
 
         Considered equal if the given object is also a `Mult` instance with same operands.
@@ -540,10 +540,10 @@ class Mult(ArithTerm):
             and self.roperand == other.roperand
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("mult", self.loperand, self.roperand))
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the arithmetic term.
 
         Returns:
@@ -564,10 +564,10 @@ class Mult(ArithTerm):
         return f"{loperand_str}*{roperand_str}"
 
     @cached_property
-    def ground(self) -> bool:
+    def ground(self: Self) -> bool:
         return self.loperand.ground and self.roperand.ground
 
-    def eval(self) -> int:
+    def eval(self: Self) -> int:
         """Evaluates the arithmetic term.
 
         Operands must be ground to perform evaluation.
@@ -583,7 +583,7 @@ class Mult(ArithTerm):
 
         return self.loperand.eval() * self.roperand.eval()
 
-    def simplify(self) -> Union[ArithTerm, "Number", "Variable"]:
+    def simplify(self: Self) -> Union[ArithTerm, "Number", "Variable"]:
         """Simplifies the arithmetic term.
 
         First the operands are simplified.
@@ -647,7 +647,7 @@ class Div(ArithTerm):
     """
 
     def __init__(
-        self,
+        self: Self,
         loperand: Union[ArithTerm, Number, "Variable"],
         roperand: Union[ArithTerm, Number, "Variable"],
     ) -> None:
@@ -660,7 +660,7 @@ class Div(ArithTerm):
         self.loperand = loperand
         self.roperand = roperand
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the term to a given object.
 
         Considered equal if the given object is also a `Div` instance with same operands.
@@ -677,10 +677,10 @@ class Div(ArithTerm):
             and self.roperand == other.roperand
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("div", self.loperand, self.roperand))
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the arithmetic term.
 
         Returns:
@@ -701,10 +701,10 @@ class Div(ArithTerm):
         return f"{loperand_str}/{roperand_str}"
 
     @cached_property
-    def ground(self) -> bool:
+    def ground(self: Self) -> bool:
         return self.loperand.ground and self.roperand.ground
 
-    def eval(self) -> int:
+    def eval(self: Self) -> int:
         """Evaluates the arithmetic term.
 
         Operands must be ground to perform evaluation.
@@ -721,7 +721,7 @@ class Div(ArithTerm):
         # NOTE: ASP-Core-2 requires integer division
         return self.loperand.eval() // self.roperand.eval()
 
-    def simplify(self) -> Union[ArithTerm, "Number", "Variable"]:
+    def simplify(self: Self) -> Union[ArithTerm, "Number", "Variable"]:
         """Simplifies the arithmetic term.
 
         First the operands are simplified.

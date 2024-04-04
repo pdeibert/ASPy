@@ -2,7 +2,18 @@ import itertools
 from abc import ABC, abstractmethod
 from functools import cached_property, reduce
 from itertools import chain, combinations
-from typing import TYPE_CHECKING, Any, Iterable, Iterator, Optional, Set, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Iterable,
+    Iterator,
+    Optional,
+    Self,
+    Set,
+    Tuple,
+    Type,
+    Union,
+)
 
 from aspy.program.expression import Expr
 from aspy.program.operators import AggrOp, RelOp
@@ -43,7 +54,7 @@ class AggrElement(Expr):
     """  # noqa
 
     def __init__(
-        self,
+        self: Self,
         terms: Optional[Union[Tuple["Term", ...], "TermTuple"]] = None,
         literals: Optional[Union[Tuple["Literal", ...], "LiteralCollection"]] = None,
     ) -> None:
@@ -67,7 +78,7 @@ class AggrElement(Expr):
             else LiteralCollection(*literals)
         )
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the element to a given object.
 
         Considered equal if the given object is also an `AggrElement` instance with same terms and literals.
@@ -84,10 +95,10 @@ class AggrElement(Expr):
             and self.literals == other.literals
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("aggr element", self.terms, self.literals))
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the aggregate element.
 
         Returns:
@@ -102,20 +113,20 @@ class AggrElement(Expr):
         )
 
     @property
-    def head(self) -> "TermTuple":
+    def head(self: Self) -> "TermTuple":
         return self.terms
 
     @property
-    def body(self) -> "LiteralCollection":
+    def body(self: Self) -> "LiteralCollection":
         return self.literals
 
     @cached_property
-    def ground(self) -> bool:
+    def ground(self: Self) -> bool:
         return all(term.ground for term in self.terms) and all(
             literal.ground for literal in self.literals
         )
 
-    def pos_occ(self) -> LiteralCollection():
+    def pos_occ(self: Self) -> LiteralCollection:
         """Positive literal occurrences.
 
         Returns:
@@ -123,7 +134,7 @@ class AggrElement(Expr):
         """  # noqa
         return self.literals.pos_occ()
 
-    def neg_occ(self) -> LiteralCollection():
+    def neg_occ(self: Self) -> LiteralCollection:
         """Negative literal occurrences.
 
         Returns:
@@ -132,7 +143,7 @@ class AggrElement(Expr):
         return self.literals.neg_occ()
 
     @property
-    def weight(self) -> int:
+    def weight(self: Self) -> int:
         """Returns the weight of the term tuple.
 
         Also see `TermTuple.weight`.
@@ -143,7 +154,7 @@ class AggrElement(Expr):
         return self.terms.weight
 
     @property
-    def pos_weight(self) -> int:
+    def pos_weight(self: Self) -> int:
         """Returns the positive weight of the term tuple.
 
         Also see `TermTuple.weight`.
@@ -154,7 +165,7 @@ class AggrElement(Expr):
         return self.terms.pos_weight
 
     @property
-    def neg_weight(self) -> int:
+    def neg_weight(self: Self) -> int:
         """Returns the negative weight of the term tuple.
 
         Also see `TermTuple.weight`.
@@ -164,7 +175,7 @@ class AggrElement(Expr):
         """  # noqa
         return self.terms.neg_weight
 
-    def satisfied(self, literals: Set["Literal"]) -> bool:
+    def satisfied(self: Self, literals: Set["Literal"]) -> bool:
         """Check whether or not the element is satisfied.
 
         Args:
@@ -176,7 +187,7 @@ class AggrElement(Expr):
         # check if all condition literals are part of the specified set
         return all(literal in literals for literal in self.literals)
 
-    def vars(self) -> Set["Variable"]:
+    def vars(self: Self) -> Set["Variable"]:
         """Returns the variables associated with the aggregate element.
 
         Returns:
@@ -184,7 +195,9 @@ class AggrElement(Expr):
         """  # noqa
         return self.head.vars().union(self.body.vars())
 
-    def global_vars(self, statement: Optional["Statement"] = None) -> Set["Variable"]:
+    def global_vars(
+        self: Self, statement: Optional["Statement"] = None
+    ) -> Set["Variable"]:
         """Returns the global variables associated with the aggregate element.
 
         Returns:
@@ -192,7 +205,7 @@ class AggrElement(Expr):
         """  # noqa
         return self.head.global_vars().union(self.body.global_vars())
 
-    def safety(self, statement: Optional["Statement"] = None) -> SafetyTriplet:
+    def safety(self: Self, statement: Optional["Statement"] = None) -> SafetyTriplet:
         """Returns the the safety characterizations for the aggregate literal.
 
         Raises an exception, since safety characterization is undefined for aggregate elements
@@ -214,7 +227,7 @@ class AggrElement(Expr):
             "Safety characterization for aggregate elements is undefined without context."  # noqa
         )
 
-    def substitute(self, subst: "Substitution") -> "AggrElement":
+    def substitute(self: Self, subst: "Substitution") -> "AggrElement":
         """Applies a substitution to the aggregate element.
 
         Substitutes all terms and literals recursively.
@@ -230,7 +243,7 @@ class AggrElement(Expr):
             self.literals.substitute(subst),
         )
 
-    def match(self, other: "Expr") -> Optional["Substitution"]:
+    def match(self: Self, other: "Expr") -> Optional["Substitution"]:
         """Tries to match the aggregate element with an expression.
 
         Raises an exception, since matching for aggregate elements is undefined.
@@ -243,7 +256,7 @@ class AggrElement(Expr):
         """  # noqa
         raise Exception("Matching for aggregate elements is not defined.")
 
-    def replace_arith(self, var_table: "VariableTable") -> "AggrElement":
+    def replace_arith(self: Self, var_table: "VariableTable") -> "AggrElement":
         """Replaces arithmetic terms appearing in the aggregate element with arithmetic variables.
 
         Note: arithmetic terms are not replaced in-place.
@@ -259,7 +272,7 @@ class AggrElement(Expr):
             self.literals.replace_arith(var_table),
         )
 
-    def set_naf(self, value: bool = True) -> None:
+    def set_naf(self: Self, value: bool = True) -> None:
         """Setter for the `naf` attribute.
 
         Args:
@@ -280,7 +293,7 @@ class AggrFunc(ABC):
     """
 
     @abstractmethod  # pragma: no cover
-    def eval(self, elements: Set["TermTuple"]) -> Number:
+    def eval(self: Self, elements: Set["TermTuple"]) -> Number:
         """Evaluates the arithmetic function.
 
         Returns:
@@ -290,12 +303,12 @@ class AggrFunc(ABC):
 
     @property
     @abstractmethod  # pragma: no cover
-    def base(self) -> "Term":
+    def base(self: Self) -> "Term":
         pass
 
     @abstractmethod  # pragma: no cover
     def propagate(
-        self,
+        self: Self,
         guards: Tuple[Optional[Guard], Optional[Guard]],
         elements: Set["AggrElement"],
         literals_I: Set["Literal"],
@@ -330,7 +343,7 @@ class AggrCount(AggrFunc):
 
     base: Number = Number(0)
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the aggregate function.
 
         Returns:
@@ -338,7 +351,7 @@ class AggrCount(AggrFunc):
         """
         return "#count"
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the aggregate function to a given object.
 
         Considered equal if the given object is also a `AggrCount` instance.
@@ -351,11 +364,11 @@ class AggrCount(AggrFunc):
         """  # noqa
         return isinstance(other, AggrCount)
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("aggregate count"))
 
     @classmethod
-    def eval(cls, tuples: Set["TermTuple"]) -> Number:
+    def eval(cls: Type["AggrCount"], tuples: Set["TermTuple"]) -> Number:
         """Evaluates the aggregate function.
 
         Args:
@@ -367,7 +380,7 @@ class AggrCount(AggrFunc):
         return Number(len(tuples))
 
     def propagate(
-        self,
+        self: Self,
         guards: Tuple[Optional[Guard], Optional[Guard]],
         elements: Set["AggrElement"],
         literals_I: Set["Literal"],
@@ -473,7 +486,7 @@ class AggrSum(AggrFunc):
 
     base: Number = Number(0)
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the aggregate function.
 
         Returns:
@@ -481,7 +494,7 @@ class AggrSum(AggrFunc):
         """
         return "#sum"
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the aggregate function to a given object.
 
         Considered equal if the given object is also a `AggrSum` instance.
@@ -494,12 +507,15 @@ class AggrSum(AggrFunc):
         """  # noqa
         return isinstance(other, AggrSum)
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("aggregate sum"))
 
     @classmethod
     def eval(
-        cls, tuples: Set["TermTuple"], positive: bool = True, negative: bool = True
+        cls: Type["AggrSum"],
+        tuples: Set["TermTuple"],
+        positive: bool = True,
+        negative: bool = True,
     ) -> Number:
         """Evaluates the aggregate function.
 
@@ -528,7 +544,7 @@ class AggrSum(AggrFunc):
         )
 
     def propagate(
-        self,
+        self: Self,
         guards: Tuple[Optional[Guard], Optional[Guard]],
         elements: Set["AggrElement"],
         literals_I: Set["Literal"],
@@ -710,7 +726,7 @@ class AggrMin(AggrFunc):
 
     base: Supremum = Supremum()
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the aggregate function.
 
         Returns:
@@ -718,7 +734,7 @@ class AggrMin(AggrFunc):
         """
         return "#min"
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the aggregate function to a given object.
 
         Considered equal if the given object is also a `AggrMin` instance.
@@ -731,11 +747,11 @@ class AggrMin(AggrFunc):
         """  # noqa
         return isinstance(other, AggrMin)
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("aggregate min"))
 
     @classmethod
-    def eval(cls, tuples: Set["TermTuple"]) -> "Term":
+    def eval(cls: Type["AggrMin"], tuples: Set["TermTuple"]) -> "Term":
         """Evaluates the aggregate function.
 
         Args:
@@ -753,7 +769,7 @@ class AggrMin(AggrFunc):
         )
 
     def propagate(
-        self,
+        self: Self,
         guards: Tuple[Optional[Guard], Optional[Guard]],
         elements: Set["AggrElement"],
         literals_I: Set["Literal"],
@@ -896,7 +912,7 @@ class AggrMax(AggrFunc):
 
     base: Infimum = Infimum()
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the aggregate function.
 
         Returns:
@@ -904,7 +920,7 @@ class AggrMax(AggrFunc):
         """
         return "#max"
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the aggregate function to a given object.
 
         Considered equal if the given object is also a `AggrMax` instance.
@@ -917,11 +933,11 @@ class AggrMax(AggrFunc):
         """  # noqa
         return isinstance(other, AggrMax)
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("aggregate max"))
 
     @classmethod
-    def eval(cls, tuples: Set["TermTuple"]) -> "Term":
+    def eval(cls: Type["AggrMax"], tuples: Set["TermTuple"]) -> "Term":
         """Evaluates the aggregate function.
 
         Args:
@@ -939,7 +955,7 @@ class AggrMax(AggrFunc):
         )
 
     def propagate(
-        self,
+        self: Self,
         guards: Tuple[Optional[Guard], Optional[Guard]],
         elements: Set["AggrElement"],
         literals_I: Set["Literal"],
@@ -1027,7 +1043,6 @@ class AggrMax(AggrFunc):
         res = True
 
         for guard in guards:
-
             if guard is None:
                 continue
             if res is False:
@@ -1085,7 +1100,7 @@ class AggrLiteral(Literal):
     """  # noqa
 
     def __init__(
-        self,
+        self: Self,
         func: AggrFunc,
         elements: Tuple[AggrElement, ...],
         guards: Union[Guard, Tuple[Guard, ...]],
@@ -1192,7 +1207,7 @@ class AggrLiteral(Literal):
         """
         self.naf = value
 
-    def pos_occ(self) -> LiteralCollection():
+    def pos_occ(self) -> LiteralCollection:
         """Positive literal occurrences.
 
         Returns:
@@ -1203,7 +1218,7 @@ class AggrLiteral(Literal):
             *itertools.chain(*tuple(element.pos_occ() for element in self.elements))
         )
 
-    def neg_occ(self) -> LiteralCollection():
+    def neg_occ(self) -> LiteralCollection:
         """Negative literal occurrences.
 
         Returns:

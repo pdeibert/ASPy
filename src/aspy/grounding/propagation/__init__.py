@@ -1,2 +1,2 @@
-from .aggregates import AggrPropagator
-from .choice import ChoicePropagator
+from .aggregates import AggrPropagator  # noqa
+from .choice import ChoicePropagator  # noqa

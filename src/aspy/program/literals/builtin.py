@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any, Optional, Self, Set, Tuple, Union
 
 from aspy.program.operators import RelOp
 from aspy.program.safety_characterization import SafetyRule, SafetyTriplet
@@ -31,7 +31,7 @@ class BuiltinLiteral(Literal, ABC):
         ground: Boolean indicating whether or not the literal is ground.
     """
 
-    def __init__(self, loperand: "Term", roperand: "Term") -> None:
+    def __init__(self: Self, loperand: "Term", roperand: "Term") -> None:
         """Initializes built-in literal instance.
 
         Args:
@@ -45,10 +45,10 @@ class BuiltinLiteral(Literal, ABC):
         self.roperand = roperand
 
     @cached_property
-    def ground(self) -> bool:
+    def ground(self: Self) -> bool:
         return self.loperand.ground and self.roperand.ground
 
-    def pos_occ(self) -> "LiteralCollection":
+    def pos_occ(self: Self) -> "LiteralCollection":
         """Positive literal occurrences.
 
         Returns:
@@ -56,7 +56,7 @@ class BuiltinLiteral(Literal, ABC):
         """
         return LiteralCollection()
 
-    def neg_occ(self) -> "LiteralCollection":
+    def neg_occ(self: Self) -> "LiteralCollection":
         """Negative literal occurrences.
 
         Returns:
@@ -64,7 +64,7 @@ class BuiltinLiteral(Literal, ABC):
         """
         return LiteralCollection()
 
-    def vars(self) -> Set["Variable"]:
+    def vars(self: Self) -> Set["Variable"]:
         """Returns the variables associated with the built-in literal.
 
         Returns:
@@ -73,7 +73,7 @@ class BuiltinLiteral(Literal, ABC):
         return self.loperand.vars().union(self.roperand.vars())
 
     def safety(
-        self, statement: Optional[Union["Statement", "Query"]] = None
+        self: Self, statement: Optional[Union["Statement", "Query"]] = None
     ) -> SafetyTriplet:
         """Returns the the safety characterizations for the built-in literal.
 
@@ -88,11 +88,11 @@ class BuiltinLiteral(Literal, ABC):
         return SafetyTriplet(unsafe=self.vars())
 
     @property
-    def operands(self) -> Tuple["Term", "Term"]:
+    def operands(self: Self) -> Tuple["Term", "Term"]:
         return (self.loperand, self.roperand)
 
     @abstractmethod  # pragma: no cover
-    def eval(self) -> bool:
+    def eval(self: Self) -> bool:
         """Evaluates the built-in literal.
 
         Returns:
@@ -100,7 +100,7 @@ class BuiltinLiteral(Literal, ABC):
         """  # noqa
         pass
 
-    def replace_arith(self, var_table: "VariableTable") -> "BuiltinLiteral":
+    def replace_arith(self: Self, var_table: "VariableTable") -> "BuiltinLiteral":
         """Replaces arithmetic terms appearing in the operand(s).
 
         Note: arithmetic terms are not replaced in-place.
@@ -116,7 +116,7 @@ class BuiltinLiteral(Literal, ABC):
             self.roperand.replace_arith(var_table),
         )
 
-    def substitute(self, subst: Substitution) -> "Equal":
+    def substitute(self: Self, subst: Substitution) -> "Equal":
         """Applies a substitution to the built-in literals.
 
         Substitutes all operands recursively.
@@ -146,7 +146,7 @@ class Equal(BuiltinLiteral):
         ground: Boolean indicating whether or not the literal is ground.
     """
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the built-in literal.
 
         Returns:
@@ -155,7 +155,7 @@ class Equal(BuiltinLiteral):
         """
         return f"{str(self.loperand)}={str(self.roperand)}"
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the built-in literal to a given object.
 
         Considered equal if the given object is also an `Equal` instance with same operands.
@@ -172,11 +172,11 @@ class Equal(BuiltinLiteral):
             and self.roperand == other.roperand
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("equal", self.loperand, self.roperand))
 
     def safety(
-        self, statement: Optional[Union["Statement", "Query"]] = None
+        self: Self, statement: Optional[Union["Statement", "Query"]] = None
     ) -> SafetyTriplet:
         """Returns the the safety characterizations for the built-in literal.
 
@@ -206,7 +206,7 @@ class Equal(BuiltinLiteral):
 
         return SafetyTriplet(unsafe=lvars.union(rvars), rules=rules).normalize()
 
-    def eval(self) -> bool:
+    def eval(self: Self) -> bool:
         """Evaluates the built-in literal w.r.t. the total ordering for terms.
 
         Requires both operands to be ground.
@@ -234,7 +234,7 @@ class Equal(BuiltinLiteral):
 
         return loperand.precedes(roperand) and roperand.precedes(loperand)
 
-    def match(self, other: "Expr") -> Optional[Substitution]:
+    def match(self: Self, other: "Expr") -> Optional[Substitution]:
         """Tries to match the built-in literal with an expression.
 
         Can only be matched to an `Equal` instance with equal operands.
@@ -262,7 +262,7 @@ class Unequal(BuiltinLiteral):
         ground: Boolean indicating whether or not the literal is ground.
     """
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the built-in literal.
 
         Returns:
@@ -271,7 +271,7 @@ class Unequal(BuiltinLiteral):
         """
         return f"{str(self.loperand)}!={str(self.roperand)}"
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the built-in literal to a given object.
 
         Considered equal if the given object is also an `Unequal` instance with same operands.
@@ -288,10 +288,10 @@ class Unequal(BuiltinLiteral):
             and self.roperand == other.roperand
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("unequal", self.loperand, self.roperand))
 
-    def eval(self) -> bool:
+    def eval(self: Self) -> bool:
         """Evaluates the built-in literal w.r.t. the total ordering for terms.
 
         Requires both operands to be ground.
@@ -319,7 +319,7 @@ class Unequal(BuiltinLiteral):
 
         return not (loperand.precedes(roperand) and roperand.precedes(loperand))
 
-    def match(self, other: "Expr") -> Set[Substitution]:
+    def match(self: Self, other: "Expr") -> Set[Substitution]:
         """Tries to match the built-in literal with an expression.
 
         Can only be matched to an `Equal` instance with equal operands.
@@ -347,7 +347,7 @@ class Less(BuiltinLiteral):
         ground: Boolean indicating whether or not the literal is ground.
     """
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the built-in literal.
 
         Returns:
@@ -356,7 +356,7 @@ class Less(BuiltinLiteral):
         """
         return f"{str(self.loperand)}<{str(self.roperand)}"
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the built-in literal to a given object.
 
         Considered equal if the given object is also an `Less` instance with same operands.
@@ -373,10 +373,10 @@ class Less(BuiltinLiteral):
             and self.roperand == other.roperand
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("less", self.loperand, self.roperand))
 
-    def eval(self) -> bool:
+    def eval(self: Self) -> bool:
         """Evaluates the built-in literal w.r.t. the total ordering for terms.
 
         Requires both operands to be ground.
@@ -404,7 +404,7 @@ class Less(BuiltinLiteral):
 
         return loperand.precedes(roperand) and not roperand.precedes(loperand)
 
-    def match(self, other: "Expr") -> Set[Substitution]:
+    def match(self: Self, other: "Expr") -> Set[Substitution]:
         """Tries to match the built-in literal with an expression.
 
         Can only be matched to an `Equal` instance with equal operands.
@@ -432,7 +432,7 @@ class Greater(BuiltinLiteral):
         ground: Boolean indicating whether or not the literal is ground.
     """
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the built-in literal.
 
         Returns:
@@ -441,7 +441,7 @@ class Greater(BuiltinLiteral):
         """
         return f"{str(self.loperand)}>{str(self.roperand)}"
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the built-in literal to a given object.
 
         Considered equal if the given object is also an `Greater` instance with same operands.
@@ -458,10 +458,10 @@ class Greater(BuiltinLiteral):
             and self.roperand == other.roperand
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("greater", self.loperand, self.roperand))
 
-    def eval(self) -> bool:
+    def eval(self: Self) -> bool:
         """Evaluates the built-in literal w.r.t. the total ordering for terms.
 
         Requires both operands to be ground.
@@ -489,7 +489,7 @@ class Greater(BuiltinLiteral):
 
         return not loperand.precedes(roperand) and roperand.precedes(loperand)
 
-    def match(self, other: "Expr") -> Set[Substitution]:
+    def match(self: Self, other: "Expr") -> Set[Substitution]:
         """Tries to match the built-in literal with an expression.
 
         Can only be matched to an `Equal` instance with equal operands.
@@ -517,7 +517,7 @@ class LessEqual(BuiltinLiteral):
         ground: Boolean indicating whether or not the literal is ground.
     """
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the built-in literal.
 
         Returns:
@@ -526,7 +526,7 @@ class LessEqual(BuiltinLiteral):
         """
         return f"{str(self.loperand)}<={str(self.roperand)}"
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the built-in literal to a given object.
 
         Considered equal if the given object is also an `LessEqual` instance with same operands.
@@ -543,10 +543,10 @@ class LessEqual(BuiltinLiteral):
             and self.roperand == other.roperand
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("less equal", self.loperand, self.roperand))
 
-    def eval(self) -> bool:
+    def eval(self: Self) -> bool:
         """Evaluates the built-in literal w.r.t. the total ordering for terms.
 
         Requires both operands to be ground.
@@ -574,7 +574,7 @@ class LessEqual(BuiltinLiteral):
 
         return loperand.precedes(roperand)
 
-    def match(self, other: "Expr") -> Set[Substitution]:
+    def match(self: Self, other: "Expr") -> Set[Substitution]:
         """Tries to match the built-in literal with an expression.
 
         Can only be matched to an `Equal` instance with equal operands.
@@ -602,7 +602,7 @@ class GreaterEqual(BuiltinLiteral):
         ground: Boolean indicating whether or not the literal is ground.
     """
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the built-in literal.
 
         Returns:
@@ -611,7 +611,7 @@ class GreaterEqual(BuiltinLiteral):
         """
         return f"{str(self.loperand)}>={str(self.roperand)}"
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the built-in literal to a given object.
 
         Considered equal if the given object is also an `GreaterEqual` instance with same operands.
@@ -628,10 +628,10 @@ class GreaterEqual(BuiltinLiteral):
             and self.roperand == other.roperand
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("greater equal", self.loperand, self.roperand))
 
-    def eval(self) -> bool:
+    def eval(self: Self) -> bool:
         """Evaluates the built-in literal w.r.t. the total ordering for terms.
 
         Requires both operands to be ground.
@@ -659,7 +659,7 @@ class GreaterEqual(BuiltinLiteral):
 
         return roperand.precedes(loperand)
 
-    def match(self, other: "Expr") -> Set[Substitution]:
+    def match(self: Self, other: "Expr") -> Set[Substitution]:
         """Tries to match the built-in literal with an expression.
 
         Can only be matched to an `Equal` instance with equal operands.

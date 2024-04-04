@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 if TYPE_CHECKING:  # pragma: no cover
     from aspy.program.terms import Term
@@ -15,7 +15,7 @@ class RelOp(Enum):
     LESS_OR_EQ = "<="
     GREATER_OR_EQ = ">="
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """String representation of the relational operator.
 
         Returns:
@@ -23,7 +23,7 @@ class RelOp(Enum):
         """
         return self._value_
 
-    def __neg__(self) -> "RelOp":
+    def __neg__(self: Self) -> "RelOp":
         """Inverts the comparison operator for switched operands.
 
         Returns:
@@ -40,7 +40,7 @@ class RelOp(Enum):
         else:
             return RelOp.LESS_OR_EQ
 
-    def __invert__(self) -> "RelOp":
+    def __invert__(self: Self) -> "RelOp":
         """Returns the equivalent operator after negation.
 
         Returns:
@@ -59,7 +59,7 @@ class RelOp(Enum):
         else:
             return RelOp.LESS
 
-    def eval(self, loperand: "Term", roperand: "Term") -> bool:
+    def eval(self: Self, loperand: "Term", roperand: "Term") -> bool:
         """Evaluates the relational operator for given operands.
 
         Args:
@@ -92,7 +92,7 @@ class ArithOp(Enum):
     TIMES = "*"
     DIV = "/"
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """String representation of the arithmetic operator.
 
         Returns:
@@ -109,7 +109,7 @@ class AggrOp(Enum):
     MAX = "#max"
     MIN = "#min"
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """String representation of the aggregate operator.
 
         Returns:

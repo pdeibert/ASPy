@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Dict, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Optional, Self, Set, Tuple
 
 from aspy.program.expression import Expr
 from aspy.program.literals import AggrLiteral
@@ -41,7 +41,7 @@ class Statement(Expr, ABC):
     __slots__ = "deterministic"
 
     def __init__(
-        self, var_table: Optional["VariableTable"] = None, *args, **kwargs
+        self: Self, var_table: Optional["VariableTable"] = None, *args, **kwargs
     ) -> None:
         """Initializes the statement instance.
 
@@ -54,7 +54,7 @@ class Statement(Expr, ABC):
         self.__var_table = var_table
 
     @abstractmethod  # pragma: no cover
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation of the statement.
 
         Returns:
@@ -64,32 +64,32 @@ class Statement(Expr, ABC):
 
     @property
     @abstractmethod  # pragma: no cover
-    def head(self) -> Any:
+    def head(self: Self) -> Any:
         # TODO: necessary to require for all statements?
         pass
 
     @property
     @abstractmethod  # pragma: no cover
-    def body(self) -> Any:
+    def body(self: Self) -> Any:
         # TODO: necessary to require for all statements?
         pass
 
     @property
     @abstractmethod  # pragma: no cover
-    def safe(self) -> bool:
+    def safe(self: Self) -> bool:
         pass
 
     @property
     @abstractmethod  # pragma: no cover
-    def ground(self) -> bool:
+    def ground(self: Self) -> bool:
         pass
 
     @cached_property
-    def contains_aggregates(self) -> bool:
+    def contains_aggregates(self: Self) -> bool:
         return any(isinstance(literal, AggrLiteral) for literal in self.body)
 
     @property
-    def var_table(self) -> "VariableTable":
+    def var_table(self: Self) -> "VariableTable":
         """Variable table of the statement.
 
         Initializes variable table from scratch if necessary.
@@ -102,7 +102,7 @@ class Statement(Expr, ABC):
 
         return self.__var_table
 
-    def vars(self) -> Set["Variable"]:
+    def vars(self: Self) -> Set["Variable"]:
         """Returns the variables associated with the statement.
 
         Returns:
@@ -110,7 +110,9 @@ class Statement(Expr, ABC):
         """
         return self.var_table.vars()
 
-    def global_vars(self, statement: Optional["Statement"] = None) -> Set["Variable"]:
+    def global_vars(
+        self: Self, statement: Optional["Statement"] = None
+    ) -> Set["Variable"]:
         """Returns the global variables associated with the statement.
 
         Returns:
@@ -118,7 +120,7 @@ class Statement(Expr, ABC):
         """
         return self.var_table.global_vars()
 
-    def safety(self, statment: Optional["Statement"] = None) -> "SafetyTriplet":
+    def safety(self: Self, statment: Optional["Statement"] = None) -> "SafetyTriplet":
         """Returns the safety characterization for the statement.
 
         For details see Bicheler (2015): "Optimizing Non-Ground Answer Set Programs via Rule Decomposition".
@@ -130,9 +132,9 @@ class Statement(Expr, ABC):
         Returns:
             `SafetyTriplet` instance.
         """  # noqa
-        raise Exception()
+        raise NotImplementedError()
 
-    def __init_var_table(self) -> None:
+    def __init_var_table(self: Self) -> None:
         """Initializes the variable table from scratch."""
         # initialize variable table
         self.__var_table = VariableTable(self.head.vars().union(self.body.vars()))
@@ -149,7 +151,7 @@ class Statement(Expr, ABC):
 
     @abstractmethod  # pragma: no cover
     def rewrite_aggregates(
-        self,
+        self: Self,
         aggr_counter: int,
         aggr_map: Dict[
             int,
@@ -181,7 +183,7 @@ class Statement(Expr, ABC):
 
     @abstractmethod  # pragma: no cover
     def assemble_aggregates(
-        self, assembling_map: Dict["AggrPlaceholder", "AggrLiteral"]
+        self: Self, assembling_map: Dict["AggrPlaceholder", "AggrLiteral"]
     ) -> "Statement":
         """Reassembles rewritten aggregates expressions inside the statement.
 
@@ -195,7 +197,7 @@ class Statement(Expr, ABC):
         pass
 
     def rewrite_choices(
-        self,
+        self: Self,
         choice_counter: int,
         choice_map: Dict[
             int,
@@ -226,7 +228,7 @@ class Statement(Expr, ABC):
         return deepcopy(self)
 
     def assemble_choices(
-        self,
+        self: Self,
         assembling_map: Dict["ChoicePlaceholder", "Choice"],
     ) -> "Statement":
         """Reassembles rewritten choice expressions inside the statement.
@@ -240,7 +242,7 @@ class Statement(Expr, ABC):
         """
         return deepcopy(self)
 
-    def consequents(self) -> "LiteralCollection":
+    def consequents(self: Self) -> "LiteralCollection":
         """Returns the consequents of the statement.
 
         Returns:
@@ -248,7 +250,7 @@ class Statement(Expr, ABC):
         """
         return self.head
 
-    def antecedents(self) -> "LiteralCollection":
+    def antecedents(self: Self) -> "LiteralCollection":
         """Returns the antecedents of the statement.
 
         Returns:
@@ -256,14 +258,14 @@ class Statement(Expr, ABC):
         """
         return self.body
 
-    def pos_occ(self) -> "LiteralCollection":
+    def pos_occ(self: Self) -> "LiteralCollection":
         """TODO"""
         return self.head.pos_occ() + self.body.pos_occ()
 
-    def neg_occ(self) -> "LiteralCollection":
+    def neg_occ(self: Self) -> "LiteralCollection":
         """TODO"""
         return self.head.neg_occ() + self.body.neg_occ()
 
     @property
-    def is_fact(self) -> bool:
+    def is_fact(self: Self) -> bool:
         return False

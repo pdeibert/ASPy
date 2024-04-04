@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, NamedTuple, Optional, Set, Union
+from typing import TYPE_CHECKING, Any, NamedTuple, Optional, Self, Set, Union
 
 if TYPE_CHECKING:  # pragma: no cover
     from aspy.program.operators import RelOp
@@ -25,7 +25,7 @@ class Guard(NamedTuple):
     bound: "Term"
     right: bool
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the guard.
 
         Returns:
@@ -39,7 +39,7 @@ class Guard(NamedTuple):
         else:
             return f"{str(self.bound)} {str(self.op)}"
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the guard to a given object.
 
         Considered equal if the given object is also a `Guard` instance with same bound
@@ -63,10 +63,10 @@ class Guard(NamedTuple):
             )
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("guard", self.op, self.bound, self.right))
 
-    def to_left(self) -> "Guard":
+    def to_left(self: Self) -> "Guard":
         """Moves guard to the left-hand side.
 
         Returns:
@@ -76,7 +76,7 @@ class Guard(NamedTuple):
             return Guard(-self.op, self.bound, False)
         return deepcopy(self)
 
-    def to_right(self) -> "Guard":
+    def to_right(self: Self) -> "Guard":
         """Moves guard to the right-hand side.
 
         Returns:
@@ -86,7 +86,7 @@ class Guard(NamedTuple):
             return Guard(-self.op, self.bound, True)
         return deepcopy(self)
 
-    def vars(self) -> Set["Variable"]:
+    def vars(self: Self) -> Set["Variable"]:
         """Returns the variables associated with the guard.
 
         Returns:
@@ -94,7 +94,9 @@ class Guard(NamedTuple):
         """  # noqa
         return self.bound.vars()
 
-    def global_vars(self, statement: Optional["Statement"] = None) -> Set["Variable"]:
+    def global_vars(
+        self: Self, statement: Optional["Statement"] = None
+    ) -> Set["Variable"]:
         """Returns the global variables associated with the guard.
 
         Args:
@@ -107,7 +109,7 @@ class Guard(NamedTuple):
         return self.bound.global_vars(statement)
 
     def safety(
-        self, statement: Optional[Union["Statement", "Query"]] = None
+        self: Self, statement: Optional[Union["Statement", "Query"]] = None
     ) -> "SafetyTriplet":
         """Returns the the safety characterizations for the guard.
 
@@ -123,10 +125,10 @@ class Guard(NamedTuple):
         return self.bound.safety(statement)
 
     @property
-    def ground(self) -> bool:
+    def ground(self: Self) -> bool:
         return self.bound.ground
 
-    def substitute(self, subst: "Substitution") -> "Guard":
+    def substitute(self: Self, subst: "Substitution") -> "Guard":
         """Applies a substitution to the guard.
 
         Substitutes the bound term recursively.
@@ -139,7 +141,7 @@ class Guard(NamedTuple):
         """
         return Guard(self.op, self.bound.substitute(subst), self.right)
 
-    def replace_arith(self, var_table: "VariableTable") -> "Guard":
+    def replace_arith(self: Self, var_table: "VariableTable") -> "Guard":
         """Replaces arithmetic terms appearing in the guard bound with arithmetic variables.
 
         Note: arithmetic terms are not replaced in-place.

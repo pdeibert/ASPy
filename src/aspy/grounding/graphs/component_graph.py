@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, List, Optional, Self, Set, Tuple, Type
 
 from .dependency_graph import DependencyGraph
 from .scc import compute_SCCs
@@ -10,7 +10,7 @@ if TYPE_CHECKING:  # pragma: no cover
 
 class Component:
     def __init__(
-        self,
+        self: Self,
         rules: Set["Statement"],
         pos_edges: Optional[Set[Tuple["Statement", "Statement"]]] = None,
         neg_edges: Optional[Set[Tuple["Statement", "Statement"]]] = None,
@@ -22,11 +22,10 @@ class Component:
         self.stratified = stratified
 
     @property
-    def edges(self) -> Set[Tuple["Statement", "Statement"]]:
+    def edges(self: Self) -> Set[Tuple["Statement", "Statement"]]:
         return self.pos_edges.union(self.neg_edges)
 
-    def sequence(self) -> List[Tuple["Statement", ...]]:
-
+    def sequence(self: Self) -> List[Tuple["Statement", ...]]:
         # compute strong connected components (convert to tuples for dict hashing)
         sccs = [
             tuple(component) for component in compute_SCCs(self.nodes, self.pos_edges)
@@ -44,7 +43,7 @@ class Component:
         pos_edges = set()
 
         # group positive edges
-        for (src, dst) in self.pos_edges:
+        for src, dst in self.pos_edges:
             src_component = rule2scc[src]
             dst_component = rule2scc[dst]
 
@@ -61,7 +60,9 @@ class Component:
 
 
 class ComponentGraph(object):
-    def __new__(cls, rules: Set["Statement"]) -> "ComponentGraph":
+    def __new__(
+        cls: Type["ComponentGraph"], rules: Set["Statement"]
+    ) -> "ComponentGraph":
         # create dependency graph
         dep_graph = DependencyGraph(rules)
 
@@ -69,8 +70,9 @@ class ComponentGraph(object):
         return cls.from_dependency_graph(dep_graph)
 
     @classmethod
-    def from_dependency_graph(cls, dep_graph: DependencyGraph) -> "ComponentGraph":
-
+    def from_dependency_graph(
+        cls: Type["ComponentGraph"], dep_graph: DependencyGraph
+    ) -> "ComponentGraph":
         # compute strong connected components (convert to tuples for dict hashing)
         sccs = [
             tuple(component)
@@ -92,7 +94,7 @@ class ComponentGraph(object):
         neg_edges = set()
 
         # group positive edges
-        for (src, dst) in dep_graph.pos_edges:
+        for src, dst in dep_graph.pos_edges:
             src_component = rule2scc[src]
             dst_component = rule2scc[dst]
 
@@ -102,7 +104,7 @@ class ComponentGraph(object):
                 pos_edges.add((src, dst))
 
         # group negative edges
-        for (src, dst) in dep_graph.neg_edges:
+        for src, dst in dep_graph.neg_edges:
             src_scc = rule2scc[src]
             dst_scc = rule2scc[dst]
 
@@ -152,11 +154,10 @@ class ComponentGraph(object):
             ).add(component)
 
         while not converged:
-
             converged = True
 
             for component in stratified_components.copy():
-                for (src_component, dst_component) in graph.edges:
+                for src_component, dst_component in graph.edges:
                     # if component depends on an unstratified component,
                     # mark it as unstratisfied
                     if (
@@ -170,10 +171,10 @@ class ComponentGraph(object):
         return graph
 
     @property
-    def edges(self) -> Set[Tuple["Statement", "Statement"]]:
+    def edges(self: Self) -> Set[Tuple["Statement", "Statement"]]:
         return self.pos_edges.union(self.neg_edges)
 
-    def sequence(self) -> List[Component]:
+    def sequence(self: Self) -> List[Component]:
         """Returns the instantiation sequence for the components."""
         seq = topological_sort(self.nodes, self.edges)
         # reverse order

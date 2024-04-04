@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Optional, Self, Type, Union
 
 import aspy
 from aspy.program.literals import (
@@ -28,27 +28,26 @@ class PropBaseRule(NormalRule):
     """TODO."""
 
     def __init__(
-        self,
+        self: Self,
         atom: PropBaseLiteral,
         lguard: Optional["Guard"],
         rguard: Optional["Guard"],
         literals: "LiteralCollection",
     ) -> None:
-
         super().__init__(atom, literals)
         self.guards = (lguard, rguard)
 
     @property
-    def ref_id(self) -> int:
+    def ref_id(self: Self) -> int:
         return self.atom.ref_id
 
     @property
-    def glob_vars(self) -> TermTuple:
+    def glob_vars(self: Self) -> TermTuple:
         return self.atom.glob_vars
 
     @classmethod
     def from_scratch(
-        cls,
+        cls: Type["PropBaseRule"],
         ref_id: int,
         glob_vars: TermTuple,
         lguard: Optional["Guard"],
@@ -57,7 +56,6 @@ class PropBaseRule(NormalRule):
         literals: "LiteralCollection",
         atom_type: Type = PropBaseLiteral,
     ) -> "PropBaseRule":
-
         # check if global vars is tuple (important for FIXED order)
         if aspy.debug():
             if not isinstance(glob_vars, TermTuple):
@@ -90,7 +88,7 @@ class PropBaseRule(NormalRule):
 
         return cls(atom, lguard, rguard, guard_literals + literals)
 
-    def substitute(self, subst: "Substitution") -> "PropBaseRule":
+    def substitute(self: Self, subst: "Substitution") -> "PropBaseRule":
         if self.ground:
             return deepcopy(self)
 
@@ -99,7 +97,7 @@ class PropBaseRule(NormalRule):
             self.atom.substitute(subst), *self.guards, self.literals.substitute(subst)
         )
 
-    def replace_arith(self, var_table: "VariableTable") -> "PropBaseRule":
+    def replace_arith(self: Self, var_table: "VariableTable") -> "PropBaseRule":
         """Replaces arithmetic terms appearing in the statement with arithmetic variables.
 
         Note: arithmetic terms are not replaced in-place.
@@ -116,7 +114,7 @@ class PropBaseRule(NormalRule):
             self.literals.replace_arith(var_table),
         )
 
-    def gather_var_assignment(self) -> Substitution:
+    def gather_var_assignment(self: Self) -> Substitution:
         """Get substitution of local and global variables from rules. Remaining variables will simply be mapped onto themselves."""  # noqa
         return self.atom.gather_var_assignment()
 
@@ -125,7 +123,7 @@ class PropElemRule(NormalRule):
     """TODO."""
 
     def __init__(
-        self,
+        self: Self,
         atom: PropElemLiteral,
         element: Union["AggrElement", "ChoiceElement"],
         literals: "LiteralCollection",
@@ -133,7 +131,7 @@ class PropElemRule(NormalRule):
         super().__init__(atom, literals)
         self.element = element
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         return (
             isinstance(other, type(self))
             and self.atom == other.atom
@@ -141,30 +139,30 @@ class PropElemRule(NormalRule):
             and self.element == other.element
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(
             ("prop element rule", type(self), self.atom, self.literals, self.element)
         )
 
     @property
-    def ref_id(self) -> int:
+    def ref_id(self: Self) -> int:
         return self.atom.ref_id
 
     @property
-    def element_id(self) -> int:
+    def element_id(self: Self) -> int:
         return self.atom.element_id
 
     @property
-    def local_vars(self) -> int:
+    def local_vars(self: Self) -> int:
         return self.atom.local_vars
 
     @property
-    def glob_vars(self) -> int:
+    def glob_vars(self: Self) -> int:
         return self.atom.glob_vars
 
     @classmethod
     def from_scratch(
-        cls,
+        cls: Type["PropElemRule"],
         ref_id: int,
         element_id: int,
         glob_vars: TermTuple,
@@ -172,7 +170,6 @@ class PropElemRule(NormalRule):
         literals: "LiteralCollection",
         atom_type: Type = PropElemLiteral,
     ) -> "PropElemRule":
-
         # compute local variables
         local_vars = TermTuple(
             *tuple(var for var in element.vars() if var not in glob_vars)
@@ -187,7 +184,7 @@ class PropElemRule(NormalRule):
 
         return cls(atom, element, literals)
 
-    def substitute(self, subst: "Substitution") -> "PropElemRule":
+    def substitute(self: Self, subst: "Substitution") -> "PropElemRule":
         if self.ground:
             return deepcopy(self)
 
@@ -196,14 +193,14 @@ class PropElemRule(NormalRule):
             self.atom.substitute(subst), self.element, self.literals.substitute(subst)
         )
 
-    def replace_arith(self, var_table: "VariableTable") -> "PropElemRule":
+    def replace_arith(self: Self, var_table: "VariableTable") -> "PropElemRule":
         return type(self)(
             self.atom.replace_arith(var_table),
             self.element,
             self.literals.replace_arith(var_table),
         )
 
-    def gather_var_assignment(self) -> Substitution:
+    def gather_var_assignment(self: Self) -> Substitution:
         """Get substitution of local and global variables from rules. Remaining variables will simply be mapped onto themselves."""  # noqa
         return self.atom.gather_var_assignment()
 
@@ -212,18 +209,17 @@ class AggrBaseRule(PropBaseRule):
     """TODO."""
 
     def __init__(
-        self,
+        self: Self,
         atom: AggrBaseLiteral,
         lguard: Optional["Guard"],
         rguard: Optional["Guard"],
         literals: "LiteralCollection",
     ) -> None:
-
         super().__init__(atom, lguard, rguard, literals)
 
     @classmethod
     def from_scratch(
-        cls,
+        cls: Type["AggrBaseRule"],
         ref_id: int,
         glob_vars: TermTuple,
         lguard: Optional["Guard"],
@@ -246,7 +242,7 @@ class AggrElemRule(PropElemRule):
     """TODO."""
 
     def __init__(
-        self,
+        self: Self,
         atom: AggrElemLiteral,
         element: "AggrElement",
         literals: "LiteralCollection",
@@ -255,7 +251,7 @@ class AggrElemRule(PropElemRule):
 
     @classmethod
     def from_scratch(
-        cls,
+        cls: Type["AggrElemRule"],
         ref_id: int,
         element_id: int,
         glob_vars: TermTuple,
@@ -276,18 +272,17 @@ class ChoiceBaseRule(PropBaseRule):
     """TODO."""
 
     def __init__(
-        self,
+        self: Self,
         atom: ChoiceBaseLiteral,
         lguard: Optional["Guard"],
         rguard: Optional["Guard"],
         literals: "LiteralCollection",
     ) -> None:
-
         super().__init__(atom, lguard, rguard, literals)
 
     @classmethod
     def from_scratch(
-        cls,
+        cls: Type["ChoiceBaseRule"],
         ref_id: int,
         glob_vars: TermTuple,
         lguard: Optional["Guard"],
@@ -309,7 +304,7 @@ class ChoiceElemRule(PropElemRule):
     """TODO."""
 
     def __init__(
-        self,
+        self: Self,
         atom: ChoiceElemLiteral,
         element: "ChoiceElement",
         literals: "LiteralCollection",
@@ -318,7 +313,7 @@ class ChoiceElemRule(PropElemRule):
 
     @classmethod
     def from_scratch(
-        cls,
+        cls: Type["ChoiceElemRule"],
         ref_id: int,
         element_id: int,
         glob_vars: TermTuple,

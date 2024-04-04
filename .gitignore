@@ -1,8 +1,8 @@
 __pycache__/
-src/aspy/antlr/
+src/aspy/parser/
 
-!src/aspy/antlr/__init__.py
-!src/aspy/antlr/ASPCore.g4
-!src/aspy/antlr/generate.sh
+!src/aspy/parser/__init__.py
+!src/aspy/parser/ASPCore2.g4
+!src/aspy/parser/generate.sh
 
 src/*.egg-info

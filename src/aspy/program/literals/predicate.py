@@ -1,6 +1,6 @@
 from copy import deepcopy
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any, Optional, Self, Set, Tuple, Union
 
 import aspy
 from aspy.program.safety_characterization import SafetyTriplet
@@ -31,7 +31,11 @@ class PredLiteral(Literal):
     """  # noqa
 
     def __init__(
-        self, name: str, *terms: "Term", neg: bool = False, naf: bool = False
+        self,
+        name: str,
+        *terms: "Term",
+        neg: bool = False,
+        naf: bool = False,
     ) -> None:
         """Initializes predicate literal instance.
 
@@ -57,7 +61,7 @@ class PredLiteral(Literal):
         self.neg = neg
         self.terms = TermTuple(*terms)
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the literal to a given object.
 
         Considered equal if the given object is also a `PredLiteral` instance with same name/identifier value
@@ -77,10 +81,10 @@ class PredLiteral(Literal):
             and self.naf == other.naf
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("predicate literal", self.naf, self.neg, self.name, *self.terms))
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the predicate literal.
 
         Returns:
@@ -97,14 +101,14 @@ class PredLiteral(Literal):
         return f"{('not ' if self.naf else '')}{('-' if self.neg else '')}{self.name}{terms_str}"  # noqa
 
     @property
-    def arity(self) -> int:
+    def arity(self: Self) -> int:
         return len(self.terms)
 
     @cached_property
-    def ground(self) -> bool:
+    def ground(self: Self) -> bool:
         return all(term.ground for term in self.terms)
 
-    def set_neg(self, value: bool = True) -> None:
+    def set_neg(self: Self, value: bool = True) -> None:
         """Setter for the `neg` attribute.
 
         Args:
@@ -112,7 +116,7 @@ class PredLiteral(Literal):
         """
         self.neg = value
 
-    def set_naf(self, value: bool = True) -> None:
+    def set_naf(self: Self, value: bool = True) -> None:
         """Setter for the `naf` attribute.
 
         Args:
@@ -120,7 +124,7 @@ class PredLiteral(Literal):
         """
         self.naf = value
 
-    def pred(self) -> Tuple[str, int]:
+    def pred(self: Self) -> Tuple[str, int]:
         """Predicate signature of the predicate literal.
 
         Returns:
@@ -129,7 +133,7 @@ class PredLiteral(Literal):
         """
         return (self.name, self.arity)
 
-    def pos_occ(self) -> "LiteralCollection":
+    def pos_occ(self: Self) -> "LiteralCollection":
         """Positive literal occurrences.
 
         Returns:
@@ -143,7 +147,7 @@ class PredLiteral(Literal):
             PredLiteral(self.name, *self.terms.terms, neg=self.neg)
         )
 
-    def neg_occ(self) -> "LiteralCollection":
+    def neg_occ(self: Self) -> "LiteralCollection":
         """Positive literal occurrences.
 
         Returns:
@@ -158,7 +162,7 @@ class PredLiteral(Literal):
             PredLiteral(self.name, *self.terms.terms, neg=self.neg)
         )
 
-    def vars(self) -> Set["Variable"]:
+    def vars(self: Self) -> Set["Variable"]:
         """Returns the variables associated with the predicate literal.
 
         Returns:
@@ -167,7 +171,7 @@ class PredLiteral(Literal):
         return set().union(self.terms.vars())
 
     def safety(
-        self, statement: Optional[Union["Statement", "Query"]] = None
+        self: Self, statement: Optional[Union["Statement", "Query"]] = None
     ) -> Tuple[SafetyTriplet, ...]:
         """Returns the the safety characterizations for the predicate literal.
 
@@ -188,7 +192,7 @@ class PredLiteral(Literal):
             else SafetyTriplet(unsafe=self.vars())
         )
 
-    def match(self, other: "Expr") -> Optional[Substitution]:
+    def match(self: Self, other: "Expr") -> Optional[Substitution]:
         """Tries to match the predicate literal with an expression.
 
         Can only be matched to a predicate literal with same identifier where each
@@ -210,7 +214,7 @@ class PredLiteral(Literal):
 
         return None
 
-    def substitute(self, subst: Substitution) -> "PredLiteral":
+    def substitute(self: Self, subst: Substitution) -> "PredLiteral":
         """Applies a substitution to the predicate literal.
 
         Substitutes all terms recursively.
@@ -232,7 +236,7 @@ class PredLiteral(Literal):
             naf=self.naf,
         )
 
-    def replace_arith(self, var_table: "VariableTable") -> "PredLiteral":
+    def replace_arith(self: Self, var_table: "VariableTable") -> "PredLiteral":
         """Replaces arithmetic terms appearing in the predicate literal with arithmetic variables.
 
         Note: arithmetic terms are not replaced in-place.
@@ -247,6 +251,6 @@ class PredLiteral(Literal):
             self.name, *self.terms.replace_arith(var_table), neg=self.neg, naf=self.naf
         )
 
-    def as_term(self) -> Functional:
+    def as_term(self: Self) -> Functional:
         """TODO"""
         return Functional(self.name, *self.terms)

@@ -1,6 +1,6 @@
 from copy import deepcopy
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Optional, Set, Union
+from typing import TYPE_CHECKING, Any, Optional, Self, Set, Union
 
 import aspy
 from aspy.program.safety_characterization import SafetyTriplet
@@ -27,7 +27,7 @@ class Functional(Term):
         arity: Integer representing the arity of the functional term (equal to the number of terms).
     """  # noqa
 
-    def __init__(self, symbol: str, *terms: Term) -> None:
+    def __init__(self: Self, symbol: str, *terms: Term) -> None:
         """Initializes the functional term instance.
 
         Args:
@@ -47,7 +47,7 @@ class Functional(Term):
         self.symbol = symbol
         self.terms = TermTuple(*terms)
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for a functional term.
 
         Returns:
@@ -58,7 +58,7 @@ class Functional(Term):
         """  # noqa
         return self.symbol + (f"({','.join([str(term) for term in self.terms])})")
 
-    def __eq__(self, other: "Any") -> str:
+    def __eq__(self: Self, other: "Any") -> str:
         """Compares the term to a given object.
 
         Considered equal if the given object is also a `Functional` instance with same symbol/identifier value
@@ -76,18 +76,18 @@ class Functional(Term):
             and other.terms == self.terms
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("functional", self.symbol, self.terms))
 
     @property
-    def arity(self) -> int:
+    def arity(self: Self) -> int:
         return len(self.terms)
 
     @cached_property
-    def ground(self) -> bool:
+    def ground(self: Self) -> bool:
         return self.terms.ground
 
-    def precedes(self, other: Term) -> bool:
+    def precedes(self: Self, other: Term) -> bool:
         if isinstance(other, (Infimum, Number, SymbolicConstant, String)):
             return False
         elif isinstance(other, Functional):
@@ -104,7 +104,7 @@ class Functional(Term):
 
         return True
 
-    def vars(self) -> Set["Variable"]:
+    def vars(self: Self) -> Set["Variable"]:
         """Returns the variables associated with the functional term.
 
         Returns:
@@ -113,7 +113,7 @@ class Functional(Term):
         return self.terms.vars()
 
     def safety(
-        self, statenment: Optional[Union["Statement", "Query"]] = None
+        self: Self, statenment: Optional[Union["Statement", "Query"]] = None
     ) -> SafetyTriplet:
         """Returns the the safety characterizations for the functional term.
 
@@ -128,7 +128,7 @@ class Functional(Term):
         """  # noqa
         return SafetyTriplet.closure(*self.terms.safety())
 
-    def replace_arith(self, var_table: "VariableTable") -> "Functional":
+    def replace_arith(self: Self, var_table: "VariableTable") -> "Functional":
         """Replaces arithmetic terms appearing in the functional term with arithmetic variables.
 
         Note: arithmetic terms are not replaced in-place.
@@ -141,7 +141,7 @@ class Functional(Term):
         """  # noqa
         return Functional(self.symbol, *self.terms.replace_arith(var_table))
 
-    def match(self, other: "Expr") -> Optional[Substitution]:
+    def match(self: Self, other: "Expr") -> Optional[Substitution]:
         """Tries to match the term tuple with an expression.
 
         Can only be matched to a functional term with same identifier where each
@@ -162,7 +162,7 @@ class Functional(Term):
 
         return self.terms.match(other.terms)
 
-    def substitute(self, subst: Substitution) -> "Functional":
+    def substitute(self: Self, subst: Substitution) -> "Functional":
         """Applies a substitution to the functional term.
 
         Substitutes all terms recursively.

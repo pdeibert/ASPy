@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Set, Union
+from typing import Dict, Optional, Self, Set, Union
 
 from .symbols import SpecialChar
 from .terms import AnonVariable, ArithTerm, ArithVariable, Variable
@@ -19,7 +19,8 @@ class VariableTable:
     """
 
     def __init__(
-        self, variables: Optional[Union[Dict[Variable, bool], Set[Variable]]] = None
+        self: Self,
+        variables: Optional[Union[Dict[Variable, bool], Set[Variable]]] = None,
     ) -> None:
         """Initializes the variable table instance.
 
@@ -37,7 +38,7 @@ class VariableTable:
         if variables is not None:
             self.update(variables)
 
-    def __contains__(self, var: str) -> bool:
+    def __contains__(self: Self, var: str) -> bool:
         """Membership operator for variable table.
 
         Args:
@@ -53,7 +54,7 @@ class VariableTable:
 
         return False
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the variable table.
 
         Returns:
@@ -68,7 +69,7 @@ class VariableTable:
 
         return f"{{{variables_str}}}"
 
-    def __getitem__(self, var: Union[str, Variable]) -> bool:
+    def __getitem__(self: Self, var: Union[str, Variable]) -> bool:
         """Gets the stored 'is_global' value for a known variable.
 
         Args:
@@ -91,7 +92,7 @@ class VariableTable:
         else:
             raise KeyError(f"{var} is not in variable table.")
 
-    def __setitem__(self, var: Variable, is_global: bool) -> None:
+    def __setitem__(self: Self, var: Variable, is_global: bool) -> None:
         f"""Sets the 'is_global' value for a known variable.
 
         Args:
@@ -107,7 +108,7 @@ class VariableTable:
                 f"Variable {str(var)} is not known to variable table. Use {VariableTable.register} instead."  # noqa
             )
 
-    def register(self, var: Variable, is_global: bool = False) -> None:
+    def register(self: Self, var: Variable, is_global: bool = False) -> None:
         """Registers a new variable to the table.
 
         Args:
@@ -127,7 +128,9 @@ class VariableTable:
 
         self.variables[var] = is_global
 
-    def update(self, variables: Union[Dict[Variable, bool], Set[Variable]]) -> None:
+    def update(
+        self: Self, variables: Union[Dict[Variable, bool], Set[Variable]]
+    ) -> None:
         """Updates the variable table.
 
         Only updates existing variables or registers new ones.
@@ -152,7 +155,7 @@ class VariableTable:
                 self.arith_counter = max(self.arith_counter, var.id + 1)
 
     def create(
-        self,
+        self: Self,
         symbol: str = "_",
         is_global: bool = False,
         register: bool = True,
@@ -186,7 +189,6 @@ class VariableTable:
             var = AnonVariable(id)
         # special 'arithmetic replacement' variable
         elif symbol == SpecialChar.TAU.value:
-
             if orig_term is None:
                 raise ValueError(
                     "Variable table cannot create arithmetic variable without specifying 'orig_term'."  # noqa
@@ -222,7 +224,7 @@ class VariableTable:
         # return newly created variable
         return var
 
-    def vars(self) -> Set["Variable"]:
+    def vars(self: Self) -> Set["Variable"]:
         """Returns all variables in the table.
 
         Returns:
@@ -230,7 +232,7 @@ class VariableTable:
         """  # noqa
         return set(self.variables.keys())
 
-    def global_vars(self) -> Set["Variable"]:
+    def global_vars(self: Self) -> Set["Variable"]:
         """Returns all global variables in the table.
 
         Returns:
@@ -238,7 +240,7 @@ class VariableTable:
         """  # noqa
         return set(var for (var, is_global) in self.variables.items() if is_global)
 
-    def arith_vars(self) -> Set["ArithVariable"]:
+    def arith_vars(self: Self) -> Set["ArithVariable"]:
         """Returns all artihmetic placeholder variables in the table.
 
         Returns:

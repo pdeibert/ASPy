@@ -1,6 +1,6 @@
 from copy import deepcopy
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Dict, Set, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Self, Set, Tuple
 
 from aspy.program.literals import AggrLiteral, LiteralCollection
 from aspy.program.safety_characterization import SafetyTriplet
@@ -41,7 +41,7 @@ class Constraint(Statement):
 
     deterministic: bool = True
 
-    def __init__(self, *literals: "Literal", **kwargs) -> None:
+    def __init__(self: Self, *literals: "Literal", **kwargs) -> None:
         """Initializes the constraint instance.
 
         Args:
@@ -51,7 +51,7 @@ class Constraint(Statement):
 
         self.literals = LiteralCollection(*literals)
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the statement to a given object.
 
         Considered equal if the given object is also a `Constraint` instance with same literals.
@@ -66,10 +66,10 @@ class Constraint(Statement):
             other.literals
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("constraint", frozenset(self.literals)))
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the statement.
 
         Returns:
@@ -78,29 +78,29 @@ class Constraint(Statement):
         return f":- {', '.join([str(literal) for literal in self.body])}."
 
     @property
-    def head(self) -> LiteralCollection:
+    def head(self: Self) -> LiteralCollection:
         return LiteralCollection()
 
     @property
-    def body(self) -> LiteralCollection:
+    def body(self: Self) -> LiteralCollection:
         return self.literals
 
     @cached_property
-    def safe(self) -> bool:
+    def safe(self: Self) -> bool:
         global_vars = self.global_vars()
         body_safety = self.body.safety(self)
 
         return body_safety == SafetyTriplet(global_vars)
 
     @cached_property
-    def ground(self) -> bool:
+    def ground(self: Self) -> bool:
         return all(literal.ground for literal in self.literals)
 
     @cached_property
-    def contains_aggregates(self) -> bool:
+    def contains_aggregates(self: Self) -> bool:
         return any(isinstance(literal, AggrLiteral) for literal in self.literals)
 
-    def substitute(self, subst: "Substitution") -> "Constraint":
+    def substitute(self: Self, subst: "Substitution") -> "Constraint":
         """Applies a substitution to the statement.
 
         Substitutes all literals recursively.
@@ -117,7 +117,7 @@ class Constraint(Statement):
         return Constraint(*self.literals.substitute(subst))
 
     def rewrite_aggregates(
-        self,
+        self: Self,
         aggr_counter: int,
         aggr_map: Dict[
             int,
@@ -189,7 +189,7 @@ class Constraint(Statement):
         return alpha_rule
 
     def assemble_aggregates(
-        self, assembling_map: Dict["AggrPlaceholder", "AggrLiteral"]
+        self: Self, assembling_map: Dict["AggrPlaceholder", "AggrLiteral"]
     ) -> "Constraint":
         """Reassembles rewritten aggregates expressions inside the statement.
 
@@ -207,7 +207,7 @@ class Constraint(Statement):
             ),
         )
 
-    def replace_arith(self, var_table: "VariableTable") -> "TermTuple":
+    def replace_arith(self: Self, var_table: "VariableTable") -> "TermTuple":
         """Replaces arithmetic terms appearing in the statement with arithmetic variables.
 
         Note: arithmetic terms are not replaced in-place.

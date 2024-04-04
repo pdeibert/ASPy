@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 import aspy
 from aspy.program.symbols import SpecialChar
@@ -19,7 +19,7 @@ class ArithVariable(Variable):
 
     ground: bool = False
 
-    def __init__(self, id: int, orig_term: "ArithTerm") -> None:
+    def __init__(self: Self, id: int, orig_term: "ArithTerm") -> None:
         """Initializes the arithmetic variable instance.
 
         The variable identifier is initialized as `"\u03C4{id}"`.
@@ -40,7 +40,7 @@ class ArithVariable(Variable):
         self.id = id
         self.orig_term = orig_term
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for an arithmetic variable.
 
         Returns:
@@ -48,7 +48,7 @@ class ArithVariable(Variable):
         """
         return self.val
 
-    def __eq__(self, other: "Any") -> str:
+    def __eq__(self: Self, other: "Any") -> str:
         """Compares the term to a given object.
 
         Considered equal if the given object is also a `ArithVariable` instance with same id (i.e., value)
@@ -66,10 +66,10 @@ class ArithVariable(Variable):
             and self.orig_term == other.orig_term
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("arith var", self.val, self.orig_term))
 
-    def precedes(self, other: "Term") -> bool:
+    def precedes(self: Self, other: "Term") -> bool:
         """Checks precendence w.r.t. a given term.
 
         Undefined for variables (i.e., non-ground terms). Raises an exception.

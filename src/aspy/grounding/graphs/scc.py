@@ -47,7 +47,7 @@ def compute_SCCs(nodes: Set[Hashable], edges: Set[Hashable]) -> List[Set[Hashabl
         stack.append(node)
         node.on_stack = True
 
-        for (src, dst) in edges:
+        for src, dst in edges:
             # node is not the source of egde
             if src != node.node:
                 continue
@@ -69,7 +69,6 @@ def compute_SCCs(nodes: Set[Hashable], edges: Set[Hashable]) -> List[Set[Hashabl
 
         # node is root of current SCC being built
         if node.low_id == node.id:
-
             # initialize new SCC
             scc = set()
 

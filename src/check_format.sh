@@ -1,3 +1,3 @@
 #!/bin/bash
-isort . --check-only --profile black --skip aspy/antlr/
-black . --check --extend-exclude aspy/antlr/
+isort . --check-only --profile black --skip aspy/parser/
+black . --check --extend-exclude aspy/parser/

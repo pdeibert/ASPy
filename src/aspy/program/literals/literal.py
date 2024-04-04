@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Iterator, Optional, Set, Union
+from typing import TYPE_CHECKING, Any, Iterator, Optional, Self, Set, Union
 
 from aspy.program.expression import Expr
 from aspy.program.safety_characterization import SafetyTriplet
@@ -40,7 +40,7 @@ class Literal(Expr, ABC):
         pass
 
     @abstractmethod  # pragma: no cover
-    def neg_occ(self) -> "LiteralCollection":
+    def neg_occ(self: Self) -> "LiteralCollection":
         """Negative literal occurrences.
 
         Returns:
@@ -49,7 +49,7 @@ class Literal(Expr, ABC):
         pass
 
     @abstractmethod  # pragma: no cover
-    def match(self, other: "Expr") -> Optional["Substitution"]:
+    def match(self: Self, other: "Expr") -> Optional["Substitution"]:
         """Tries to match the predicate literal with an expression.
 
         Args:
@@ -60,7 +60,9 @@ class Literal(Expr, ABC):
         """  # noqa
         pass
 
-    def global_vars(self, statement: Optional["Statement"] = None) -> Set["Variable"]:
+    def global_vars(
+        self: Self, statement: Optional["Statement"] = None
+    ) -> Set["Variable"]:
         """Returns the global variables associated with the literal.
 
         Args:
@@ -72,7 +74,7 @@ class Literal(Expr, ABC):
         """
         return self.vars()
 
-    def set_neg(self, value: bool = True) -> None:
+    def set_neg(self: Self, value: bool = True) -> None:
         """Setter for the `naf` attribute.
 
         Raises an error if not overridden.
@@ -87,7 +89,7 @@ class Literal(Expr, ABC):
             f"Setting negation for literal of type {type(self)} not defined."
         )
 
-    def set_naf(self, value: bool = True) -> None:
+    def set_naf(self: Self, value: bool = True) -> None:
         """Setter for the `naf` attribute.
 
         Raises an error if not overridden.
@@ -102,7 +104,7 @@ class Literal(Expr, ABC):
             f"Setting negation for literal of type {type(self)} not defined."
         )
 
-    def __abs__(self) -> "Literal":
+    def __abs__(self: Self) -> "Literal":
         """TODO"""
         if self.naf:
             copy = deepcopy(self)
@@ -121,7 +123,7 @@ class LiteralCollection:
         ground: Boolean indicating whether or not all literals are ground.
     """
 
-    def __init__(self, *literals: Literal) -> None:
+    def __init__(self: Self, *literals: Literal) -> None:
         """Initializes literal collection instance.
 
         Args:
@@ -131,7 +133,7 @@ class LiteralCollection:
         # initialize while removing duplicates and preserving order
         self.literals = tuple(dict.fromkeys(literals))
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the literal collection.
 
         Returns:
@@ -140,10 +142,10 @@ class LiteralCollection:
         """  # noqa
         return f"{','.join(str(literal) for literal in self.literals)}"
 
-    def __len__(self) -> int:
+    def __len__(self: Self) -> int:
         return len(self.literals)
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the literal collection to a given object.
 
         Considered equal if the given object is also a `LiteralCollection` instance and contains
@@ -161,19 +163,19 @@ class LiteralCollection:
             and frozenset(self.literals) == frozenset(other.literals)
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("literal collection", frozenset(self.literals)))
 
-    def __iter__(self) -> Iterator[Literal]:
+    def __iter__(self: Self) -> Iterator[Literal]:
         return iter(self.literals)
 
-    def __add__(self, other: "LiteralCollection") -> "LiteralCollection":
+    def __add__(self: Self, other: "LiteralCollection") -> "LiteralCollection":
         return LiteralCollection(*self.literals, *other.literals)
 
-    def __getitem__(self, index: int) -> "Literal":
+    def __getitem__(self: Self, index: int) -> "Literal":
         return self.literals[index]
 
-    def __lt__(self, other: Union["LiteralCollection", Set["Literal"]]) -> bool:
+    def __lt__(self: Self, other: Union["LiteralCollection", Set["Literal"]]) -> bool:
         if isinstance(other, set):
             return set(self.literals) < other
         elif isinstance(other, LiteralCollection):
@@ -181,7 +183,7 @@ class LiteralCollection:
 
         return False
 
-    def __gt__(self, other: Union["LiteralCollection", Set["Literal"]]) -> bool:
+    def __gt__(self: Self, other: Union["LiteralCollection", Set["Literal"]]) -> bool:
         if isinstance(other, set):
             return set(self.literals) > other
         elif isinstance(other, LiteralCollection):
@@ -189,7 +191,7 @@ class LiteralCollection:
 
         return False
 
-    def __le__(self, other: Union["LiteralCollection", Set["Literal"]]) -> bool:
+    def __le__(self: Self, other: Union["LiteralCollection", Set["Literal"]]) -> bool:
         if isinstance(other, set):
             return set(self.literals) <= other
         elif isinstance(other, LiteralCollection):
@@ -197,7 +199,7 @@ class LiteralCollection:
 
         return False
 
-    def __ge__(self, other: Union["LiteralCollection", Set["Literal"]]) -> bool:
+    def __ge__(self: Self, other: Union["LiteralCollection", Set["Literal"]]) -> bool:
         if isinstance(other, set):
             return set(self.literals) >= other
         elif isinstance(other, LiteralCollection):
@@ -206,10 +208,10 @@ class LiteralCollection:
         return False
 
     @cached_property
-    def ground(self) -> bool:
+    def ground(self: Self) -> bool:
         return all(literal.ground for literal in self.literals)
 
-    def pos_occ(self) -> "LiteralCollection":
+    def pos_occ(self: Self) -> "LiteralCollection":
         """Positive literal occurrences.
 
         Returns:
@@ -219,7 +221,7 @@ class LiteralCollection:
             *itertools.chain(*tuple(literal.pos_occ() for literal in self.literals))
         )
 
-    def neg_occ(self) -> "LiteralCollection":
+    def neg_occ(self: Self) -> "LiteralCollection":
         """Negative literal occurrences.
 
         Returns:
@@ -229,7 +231,7 @@ class LiteralCollection:
             *itertools.chain(*tuple(literal.neg_occ() for literal in self.literals))
         )
 
-    def vars(self) -> Set["Variable"]:
+    def vars(self: Self) -> Set["Variable"]:
         """Returns the variables associated with the literal collection.
 
         Returns:
@@ -237,7 +239,9 @@ class LiteralCollection:
         """  # noqa
         return set().union(*tuple(literal.vars() for literal in self.literals))
 
-    def global_vars(self, statement: Optional["Statement"] = None) -> Set["Variable"]:
+    def global_vars(
+        self: Self, statement: Optional["Statement"] = None
+    ) -> Set["Variable"]:
         """Returns the global variables associated with the literal collection.
 
         Returns:
@@ -248,7 +252,7 @@ class LiteralCollection:
         )
 
     def safety(
-        self, statement: Optional[Union["Statement", "Query"]] = None
+        self: Self, statement: Optional[Union["Statement", "Query"]] = None
     ) -> "SafetyTriplet":
         """Returns the the safety characterizations for the literal collection.
 
@@ -265,7 +269,7 @@ class LiteralCollection:
             *tuple(literal.safety(statement) for literal in self.literals)
         )
 
-    def without(self, *literals: Literal) -> "LiteralCollection":
+    def without(self: Self, *literals: Literal) -> "LiteralCollection":
         """Returns a literal collection without any of the specified literals.
 
         Args:
@@ -278,7 +282,7 @@ class LiteralCollection:
             *(literal for literal in self.literals if literal not in literals)
         )
 
-    def substitute(self, subst: "Substitution") -> "LiteralCollection":
+    def substitute(self: Self, subst: "Substitution") -> "LiteralCollection":
         """Applies a substitution to the literal collection.
 
         Substitutes all literals recursively.
@@ -297,7 +301,7 @@ class LiteralCollection:
 
         return LiteralCollection(*literals)
 
-    def match(self, other: "Expr") -> Optional["Substitution"]:
+    def match(self: Self, other: "Expr") -> Optional["Substitution"]:
         """Tries to match the literal collection with an expression.
 
         Can only be matched to a literal collection where all literals can be matched (in arbitrary order)
@@ -337,7 +341,7 @@ class LiteralCollection:
 
         return subst
 
-    def replace_arith(self, var_table: "VariableTable") -> "LiteralCollection":
+    def replace_arith(self: Self, var_table: "VariableTable") -> "LiteralCollection":
         """Replaces arithmetic terms appearing in the literal collection with arithmetic variables.
 
         Note: arithmetic terms are not replaced in-place.

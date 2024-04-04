@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Optional, Set
+from typing import TYPE_CHECKING, Any, Optional, Self, Set, Type
 
 if TYPE_CHECKING:  # pragma: no cover
     from .terms import Variable
@@ -19,7 +19,7 @@ class SafetyRule:
     depender: "Variable"
     dependees: Set["Variable"]
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the safety rule to a given object.
 
         Considered equal if the given object is also a `SafetyRule` instance with same
@@ -37,12 +37,12 @@ class SafetyRule:
             and self.dependees == other.dependees
         )
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         return (
             f"{str(self.depender)} <- {','.join(tuple(str(v) for v in self.dependees))}"
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("safety rule", self.depender, frozenset(self.dependees)))
 
 
@@ -58,7 +58,7 @@ class SafetyTriplet:
     """  # noqa
 
     def __init__(
-        self,
+        self: Self,
         safe: Optional[Set["Variable"]] = None,
         unsafe: Optional[Set["Variable"]] = None,
         rules: Optional[Set[SafetyRule]] = None,
@@ -74,7 +74,7 @@ class SafetyTriplet:
         self.unsafe = unsafe if unsafe is not None else set()
         self.rules = rules if rules is not None else set()
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the safety characterization to a given object.
 
         Considered equal if the given object is also a `SafetyTriplet` instance with same
@@ -93,7 +93,7 @@ class SafetyTriplet:
             and self.rules == other.rules
         )
 
-    def normalize(self) -> "SafetyTriplet":
+    def normalize(self: Self) -> "SafetyTriplet":
         """Normalizes the safety characterization.
 
         Implements Algorithm 1 in Bicheler (2015):
@@ -117,7 +117,6 @@ class SafetyTriplet:
 
         # until there is no more change
         while rules != prev_rules or safe != prev_safe or unsafe != prev_unsafe:
-
             prev_safe = safe.copy()
             prev_unsafe = unsafe.copy()
             prev_rules = rules.copy()
@@ -126,7 +125,6 @@ class SafetyTriplet:
 
             for rule in prev_rules:
                 if not (rule.depender in rule.dependees or rule.depender in safe):
-
                     # remove safe variables from dependees and check if it becomes empty
                     if not (updated_dependees := rule.dependees - safe):
                         # drop rule and add depender to safe variables
@@ -146,7 +144,9 @@ class SafetyTriplet:
         return SafetyTriplet(safe, unsafe, rules)
 
     @classmethod
-    def closure(cls, *safeties: "SafetyTriplet") -> "SafetyTriplet":
+    def closure(
+        cls: Type["SafetyTriplet"], *safeties: "SafetyTriplet"
+    ) -> "SafetyTriplet":
         """Computes the closure for specified safety characterizations.
 
         Args:

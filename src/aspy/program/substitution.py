@@ -1,6 +1,6 @@
 from copy import deepcopy
 from functools import reduce
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, Self, Type
 
 if TYPE_CHECKING:  # pragma: no cover
     from aspy.program.terms import Term, Variable
@@ -9,7 +9,7 @@ if TYPE_CHECKING:  # pragma: no cover
 class AssignmentError(Exception):
     """Error representing an assignment conflict between substitions."""
 
-    def __init__(self, subst_1: "Substitution", subst_2: "Substitution") -> None:
+    def __init__(self: Self, subst_1: "Substitution", subst_2: "Substitution") -> None:
         """Initializes the assignment error instance.
 
         Automatically formats the error message based on the specified substitutions.
@@ -26,7 +26,9 @@ class AssignmentError(Exception):
 class Substitution(dict):
     """Substitution mapping variables to terms replacing those variables."""
 
-    def __init__(self, subst_dict: Optional[Dict["Variable", "Term"]] = None) -> None:
+    def __init__(
+        self: Self, subst_dict: Optional[Dict["Variable", "Term"]] = None
+    ) -> None:
         """Initializes the substitution instance.
 
         Args:
@@ -36,7 +38,7 @@ class Substitution(dict):
         if subst_dict is not None:
             self.update(subst_dict)
 
-    def __getitem__(self, var: "Variable") -> "Term":
+    def __getitem__(self: Self, var: "Variable") -> "Term":
         """Getter for variables in the substitution.
 
         For variables that are not part of the substitution, the variable is implicitely
@@ -49,7 +51,7 @@ class Substitution(dict):
         # map variables to themselves if no substitution specified
         return deepcopy(dict.__getitem__(self, var)) if var in self else deepcopy(var)
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the substitution.
 
         Returns:
@@ -64,7 +66,7 @@ class Substitution(dict):
 
         return f"{{{assignments_str}}}"
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the substitution to a given object.
 
         Considered equal if the given object is also a `Substitution` instance with the
@@ -81,10 +83,10 @@ class Substitution(dict):
             other
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("substitution", frozenset(self.items())))
 
-    def __add__(self, other: "Substitution") -> "Substitution":
+    def __add__(self: Self, other: "Substitution") -> "Substitution":
         """Combines the substitution with another one.
 
         Args:
@@ -107,7 +109,7 @@ class Substitution(dict):
 
         return Substitution(subst)
 
-    def compose(self, other: "Substitution") -> "Substitution":
+    def compose(self: Self, other: "Substitution") -> "Substitution":
         """Composes substitution with another one.
 
         Specified substitution is applied to the current substitution.
@@ -130,7 +132,9 @@ class Substitution(dict):
         return Substitution(subst)
 
     @classmethod
-    def composition(cls, *substitutions: "Substitution") -> "Substitution":
+    def composition(
+        cls: Type["Substitution"], *substitutions: "Substitution"
+    ) -> "Substitution":
         """Composes substitution with another one.
 
         Specified substitutions are applied to the current substitution in order.
@@ -143,7 +147,7 @@ class Substitution(dict):
         """
         return reduce(lambda s1, s2: s1.compose(s2), substitutions)
 
-    def is_identity(self) -> bool:
+    def is_identity(self: Self) -> bool:
         """Checks if the substitution is an identity substitution.
 
         Returns:

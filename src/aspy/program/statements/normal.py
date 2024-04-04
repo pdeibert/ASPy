@@ -1,6 +1,6 @@
 from copy import deepcopy
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Set, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterable, Optional, Self, Set, Tuple, Union
 
 from aspy.program.literals import (
     AggrLiteral,
@@ -53,7 +53,10 @@ class NormalRule(Statement):
     deterministic: bool = True
 
     def __init__(
-        self, atom: "PredLiteral", body: Optional[Iterable["Literal"]] = None, **kwargs
+        self: Self,
+        atom: "PredLiteral",
+        body: Optional[Iterable["Literal"]] = None,
+        **kwargs,
     ) -> None:
         """Initializes the normal rule instance.
 
@@ -74,7 +77,7 @@ class NormalRule(Statement):
             else body
         )
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the statement to a given object.
 
         Considered equal if the given object is also a `NormalRule` instance with same atom
@@ -92,10 +95,10 @@ class NormalRule(Statement):
             and self.literals == other.literals
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("normal rule", self.atom, self.literals))
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the statement.
 
         Returns:
@@ -104,22 +107,22 @@ class NormalRule(Statement):
         return f"{str(self.atom)}{f' :- {str(self.body)}' if self.body else ''}."
 
     @property
-    def head(self) -> LiteralCollection:
+    def head(self: Self) -> LiteralCollection:
         return LiteralCollection(self.atom)
 
     @property
-    def body(self) -> LiteralCollection:
+    def body(self: Self) -> LiteralCollection:
         return self.literals
 
     @cached_property
-    def safe(self) -> bool:
+    def safe(self: Self) -> bool:
         return self.body.safety(self) == SafetyTriplet(self.global_vars())
 
     @cached_property
-    def ground(self) -> bool:
+    def ground(self: Self) -> bool:
         return self.atom.ground and self.literals.ground
 
-    def substitute(self, subst: "Substitution") -> "NormalRule":
+    def substitute(self: Self, subst: "Substitution") -> "NormalRule":
         """Applies a substitution to the statement.
 
         Substitutes the atom and all literals recursively.
@@ -135,7 +138,7 @@ class NormalRule(Statement):
 
         return NormalRule(self.atom.substitute(subst), self.literals.substitute(subst))
 
-    def replace_arith(self) -> "NormalRule":
+    def replace_arith(self: Self) -> "NormalRule":
         """Replaces arithmetic terms appearing in the statement with arithmetic variables.
 
         Note: arithmetic terms are not replaced in-place.
@@ -152,7 +155,7 @@ class NormalRule(Statement):
         )
 
     def rewrite_aggregates(
-        self,
+        self: Self,
         aggr_counter: int,
         aggr_map: Dict[
             int,
@@ -226,7 +229,7 @@ class NormalRule(Statement):
         return alpha_rule
 
     def assemble_aggregates(
-        self, assembling_map: Dict["AggrPlaceholder", "AggrLiteral"]
+        self: Self, assembling_map: Dict["AggrPlaceholder", "AggrLiteral"]
     ) -> "NormalRule":
         """Reassembles rewritten aggregates expressions inside the statement.
 
@@ -246,7 +249,7 @@ class NormalRule(Statement):
         )
 
     def assemble_choices(
-        self,
+        self: Self,
         assembling_map: Dict["ChoicePlaceholder", "Choice"],
     ) -> Union["NormalRule", "ChoiceRule"]:
         """Reassembles rewritten choice expressions inside the statement.
@@ -277,5 +280,5 @@ class NormalRule(Statement):
         return deepcopy(self)
 
     @cached_property
-    def is_fact(self) -> bool:
+    def is_fact(self: Self) -> bool:
         return not bool(len(self.body))

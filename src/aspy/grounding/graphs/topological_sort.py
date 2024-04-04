@@ -15,7 +15,7 @@ def topological_sort(
     # maps nodes to children
     child_dict = defaultdict(list)
 
-    for (src, dst) in edges:
+    for src, dst in edges:
         # increment in-degree
         in_degrees[dst] += 1
 

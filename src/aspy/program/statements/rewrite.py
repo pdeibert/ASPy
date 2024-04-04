@@ -17,7 +17,6 @@ def rewrite_aggregate(
     glob_vars: Set["Variable"],
     body_literals: Iterable["Literal"],
 ) -> Tuple["AggrPlaceholder", "AggrBaseRule", List["AggrElemRule"]]:
-
     # TODO: necessary?
     aggr_glob_vars = glob_vars.intersection(literal.vars())
     var_tuple = TermTuple(*aggr_glob_vars)
@@ -57,7 +56,6 @@ def rewrite_choice(
     glob_vars: Set["Variable"],
     body_literals: Iterable["Literal"],
 ) -> Tuple["ChoicePlaceholder", "ChoiceBaseRule", List["ChoiceElemRule"]]:
-
     # TODO: necessary?
     choice_glob_vars = glob_vars.intersection(choice.vars())
     var_tuple = TermTuple(*choice_glob_vars)

@@ -1,6 +1,6 @@
 from copy import deepcopy
 from functools import cached_property
-from typing import TYPE_CHECKING, Dict, Iterable, Optional, Set, Tuple
+from typing import TYPE_CHECKING, Dict, Iterable, Optional, Self, Set, Tuple
 
 from aspy.program.expression import Expr
 from aspy.program.literals import (
@@ -34,7 +34,10 @@ class WeightAtLevel(Expr):
     """
 
     def __init__(
-        self, weight: "Term", level: "Term", terms: Optional[Iterable["Term"]] = None
+        self: Self,
+        weight: "Term",
+        level: "Term",
+        terms: Optional[Iterable["Term"]] = None,
     ) -> None:
         if terms is None:
             terms = tuple()
@@ -43,7 +46,7 @@ class WeightAtLevel(Expr):
         self.level = level
         self.terms = TermTuple(*terms) if not isinstance(terms, TermTuple) else terms
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the weight at level.
 
         Returns:
@@ -51,7 +54,7 @@ class WeightAtLevel(Expr):
         """
         return f"{str(self.weight)}@{str(self.level)}, {str(self.terms)}"
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the weight at level to a given object.
 
         Considered equal if the given object is also a `WeightAtLevel` instance
@@ -70,18 +73,18 @@ class WeightAtLevel(Expr):
             and self.terms == other.terms
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("weight at level", self.weight, self.level, self.terms))
 
     @cached_property
-    def ground(self) -> bool:
+    def ground(self: Self) -> bool:
         return (
             self.weight.ground
             and self.level.ground
             and all(term.ground for term in self.terms)
         )
 
-    def vars(self) -> Set["Variable"]:
+    def vars(self: Self) -> Set["Variable"]:
         """Returns the variables associated with the weight at level.
 
         Returns:
@@ -93,7 +96,9 @@ class WeightAtLevel(Expr):
             self.terms.vars(),
         )
 
-    def global_vars(self, statement: Optional["Statement"] = None) -> Set["Variable"]:
+    def global_vars(
+        self: Self, statement: Optional["Statement"] = None
+    ) -> Set["Variable"]:
         """Returns the global variables associated with the expression.
 
         Args:
@@ -109,7 +114,7 @@ class WeightAtLevel(Expr):
             self.terms.global_vars(),
         )
 
-    def safety(self, statement: Optional["Statement"] = None) -> "SafetyTriplet":
+    def safety(self: Self, statement: Optional["Statement"] = None) -> "SafetyTriplet":
         """Returns the safety characterization for the weight at level.
 
         For details see Bicheler (2015): "Optimizing Non-Ground Answer Set Programs via Rule Decomposition".
@@ -125,7 +130,7 @@ class WeightAtLevel(Expr):
             "Safety characterization for weight at level not supported yet."
         )
 
-    def substitute(self, subst: "Substitution") -> "WeightAtLevel":
+    def substitute(self: Self, subst: "Substitution") -> "WeightAtLevel":
         """Applies a substitution to the weight at level.
 
         Substitutes all terms recursively.
@@ -145,7 +150,7 @@ class WeightAtLevel(Expr):
             self.terms.substitute(subst),
         )
 
-    def replace_arith(self, var_table: "VariableTable") -> "WeightAtLevel":
+    def replace_arith(self: Self, var_table: "VariableTable") -> "WeightAtLevel":
         """Replaces arithmetic terms appearing in the weight at level with arithmetic variables.
 
         Note: arithmetic terms are not replaced in-place.
@@ -192,7 +197,7 @@ class WeakConstraint(Statement):
     deterministic: bool = True
 
     def __init__(
-        self,
+        self: Self,
         literals: Iterable["Literal"],
         weight_at_level: "WeightAtLevel",
     ) -> None:
@@ -211,7 +216,7 @@ class WeakConstraint(Statement):
         )
         self.weight_at_level = weight_at_level
 
-    def __eq__(self, other: "Any") -> bool:
+    def __eq__(self: Self, other: "Any") -> bool:
         """Compares the statement to a given object.
 
         Considered equal if the given object is also a `WeakConstraint` instance with same literals
@@ -229,10 +234,10 @@ class WeakConstraint(Statement):
             and self.weight_at_level == other.weight_at_level
         )
 
-    def __hash__(self) -> int:
+    def __hash__(self: Self) -> int:
         return hash(("weak constraint", self.literals, self.weight_at_level))
 
-    def __str__(self) -> str:
+    def __str__(self: Self) -> str:
         """Returns the string representation for the statement.
 
         Returns:
@@ -240,8 +245,7 @@ class WeakConstraint(Statement):
         """
         return f":~ {str(self.body)}. [{str(self.weight_at_level)}]"
 
-    def __init_var_table(self) -> None:
-
+    def __init_var_table(self: Self) -> None:
         # initialize variable table
         self.__var_table = VariableTable(
             self.literals.vars().union(self.weight_at_level.vars())
@@ -258,28 +262,28 @@ class WeakConstraint(Statement):
         )
 
     @property
-    def head(self) -> LiteralCollection:
+    def head(self: Self) -> LiteralCollection:
         return LiteralCollection()
 
     @property
-    def body(self) -> LiteralCollection:
+    def body(self: Self) -> LiteralCollection:
         return self.literals
 
     @cached_property
-    def safe(self) -> bool:
+    def safe(self: Self) -> bool:
         return self.body.safety(self) == SafetyTriplet(self.global_vars())
 
     @cached_property
-    def ground(self) -> bool:
+    def ground(self: Self) -> bool:
         return self.weight_at_level.ground and all(
             literal.ground for literal in self.literals
         )
 
     @cached_property
-    def contains_aggregates(self) -> bool:
+    def contains_aggregates(self: Self) -> bool:
         return any(isinstance(literal, AggrLiteral) for literal in self.literals)
 
-    def substitute(self, subst: "Substitution") -> "WeakConstraint":
+    def substitute(self: Self, subst: "Substitution") -> "WeakConstraint":
         """Applies a substitution to the statement.
 
         Substitutes all literals and terms in weight at level recursively.
@@ -300,7 +304,7 @@ class WeakConstraint(Statement):
         )
 
     def rewrite_aggregates(
-        self,
+        self: Self,
         aggr_counter: int,
         aggr_map: Dict[
             int,
@@ -374,7 +378,7 @@ class WeakConstraint(Statement):
         return alpha_rule
 
     def assemble_aggregates(
-        self, assembling_map: Dict["AggrPlaceholder", "AggrLiteral"]
+        self: Self, assembling_map: Dict["AggrPlaceholder", "AggrLiteral"]
     ) -> "WeakConstraint":
         """Reassembles rewritten aggregates expressions inside the statement.
 
@@ -393,7 +397,7 @@ class WeakConstraint(Statement):
             self.weight_at_level,
         )
 
-    def replace_arith(self, var_table: "VariableTable") -> "TermTuple":
+    def replace_arith(self: Self, var_table: "VariableTable") -> "TermTuple":
         """Replaces arithmetic terms appearing in the statement with arithmetic variables.
 
         Note: arithmetic terms are not replaced in-place.

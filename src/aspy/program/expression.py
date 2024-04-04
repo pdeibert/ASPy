@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Dict, Optional, Set, Union
+from typing import TYPE_CHECKING, Dict, Optional, Self, Set, Union
 
 if TYPE_CHECKING:  # pragma: no cover
     from .query import Query
@@ -18,7 +18,7 @@ class Expr(ABC):
     __slots__ = "ground"
 
     @abstractmethod  # pragma: no cover
-    def vars(self) -> Set["Variable"]:  # type: ignore
+    def vars(self: Self) -> Set["Variable"]:  # type: ignore
         """Returns the variables associated with the expression.
 
         Returns:
@@ -27,7 +27,7 @@ class Expr(ABC):
         pass
 
     @abstractmethod  # pragma: no cover
-    def global_vars(self, statement: Optional["Statement"] = None) -> Set["Variable"]:  # type: ignore # noqa
+    def global_vars(self: Self, statement: Optional["Statement"] = None) -> Set["Variable"]:  # type: ignore # noqa
         """Returns the global variables associated with the expression.
 
         Returns:
@@ -37,7 +37,7 @@ class Expr(ABC):
 
     @abstractmethod  # pragma: no cover
     def safety(
-        self, statement: Optional[Union["Statement", "Query"]] = None
+        self: Self, statement: Optional[Union["Statement", "Query"]] = None
     ) -> "SafetyTriplet":
         """Returns the safety characterization for the expression.
 
@@ -53,7 +53,7 @@ class Expr(ABC):
         pass
 
     @abstractmethod  # pragma: no cover
-    def substitute(self, subst: Dict[str, "Term"]) -> "Expr":  # type: ignore
+    def substitute(self: Self, subst: Dict[str, "Term"]) -> "Expr":  # type: ignore
         """Applies a substitution to the expression.
 
         Replaces all variables with their substitution terms.
