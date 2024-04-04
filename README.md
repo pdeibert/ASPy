@@ -1,4 +1,3 @@
-# TODO
 ![Unit test badge](https://img.shields.io/badge/Unit_tests-passed-blue?color=rgb(0,128,0))
 ![Coverage badge](https://img.shields.io/badge/Coverage-93%25-blue?color=rgb(35,145,0))
 
@@ -22,8 +21,6 @@ Before using `ASPy` for the first time, the ANTLR parser files need to be genera
 
 ## Usage
 
-# TODO
-
 ### Command Line Interface
 
 The package provides a convenient `aspy` command line tool:
@@ -34,7 +31,7 @@ If no output file is specified, the grounded program or solutions will simply be
 
 ### Python
 
-Programs are usually automatically build from a convenient string notation of the input language. As an example, consider an [$n$-Queens](https://en.wikipedia.org/wiki/Eight_queens_puzzle) task with $n=4$:
+Programs are usually automatically build from a convenient string notation of the input language. As an example, consider an [n-Queens](https://en.wikipedia.org/wiki/Eight_queens_puzzle) task with $n=4$:
 ```python
 from aspy.program import Program
 from aspy.grounding import Grounder
