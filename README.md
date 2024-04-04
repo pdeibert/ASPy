@@ -1,11 +1,11 @@
 ![Unit test badge](https://img.shields.io/badge/Unit_tests-passed-blue?color=rgb(0,128,0))
 ![Coverage badge](https://img.shields.io/badge/Coverage-93%25-blue?color=rgb(35,145,0))
 
-# ASPY
+# ASPy
 
 Answer Set Programming (ASP) in Python. Currently consists of a parser & grounder, but **no** solver. Note that the algorithms in this package are not meant to be competitive in any way, but for experimental purposes.
 
-Adheres to the latest [ASP-Core-2 standard](https://arxiv.org/abs/1911.04326), but does not support weak constraints as of yet.
+Adheres to the latest [ASP-Core-2 standard](https://arxiv.org/abs/1911.04326).
 
 The grounding process generally follows the procedure described in [On the Foundations of Grounding in Answer Set Programming](https://arxiv.org/abs/2108.04769).
 
@@ -96,5 +96,4 @@ The grounder and all associated functionality can be found in `aspy/grounder`.
 ## Additional Resources
 
 Related repositories:
-* https://github.com/potassco/clingo
 * https://github.com/potassco/mu-gringo
