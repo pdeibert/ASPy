@@ -29,6 +29,8 @@ from aspy.program.statements import (
     Constraint,
     DisjunctiveRule,
     NormalRule,
+    WeakConstraint,
+    WeightAtLevel,
 )
 from aspy.program.terms import (
     Add,
@@ -398,3 +400,9 @@ class TestProgram:
         assert Program.from_string(":- p, q.").statements[0] == Constraint(
             PredLiteral("p"), PredLiteral("q")
         )
+
+        # ----- weak constraint -----
+        assert Program.from_string(":~ p,q. [0@X, Y,-1]").statements[0] == WeakConstraint(
+                (PredLiteral("p"), PredLiteral("q")),
+                WeightAtLevel(Number(0), Variable("X"), (Variable("Y"), Number(-1))),
+            )

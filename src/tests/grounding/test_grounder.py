@@ -17,7 +17,7 @@ from aspy.program.literals import (
 )
 from aspy.program.operators import RelOp
 from aspy.program.program import Program
-from aspy.program.statements import Constraint, DisjunctiveRule, NormalRule
+from aspy.program.statements import Constraint, DisjunctiveRule, NormalRule, WeakConstraint, WeightAtLevel
 from aspy.program.substitution import Substitution
 from aspy.program.terms import Number, Variable
 
@@ -348,6 +348,45 @@ class TestGrounder:
             )
             == set()
         )  # not all literals have matches in 'possible'
+
+        # ----- weak constraints -----
+
+        # ground rule
+        assert Grounder.ground_statement(
+                WeakConstraint(
+                    (PredLiteral("p", Number(1)), PredLiteral("q", Number(0))),
+                    WeightAtLevel(Number(1), Number(1), (Number(-1), Number(2))),
+                ),
+                possible={PredLiteral("p", Number(1)), PredLiteral("q", Number(0))},
+            ) == {
+                WeakConstraint(
+                    (PredLiteral("p", Number(1)), PredLiteral("q", Number(0))),
+                    WeightAtLevel(Number(1), Number(1), (Number(-1), Number(2))),
+                ),
+            }
+        # non-ground rule
+        assert Grounder.ground_statement(
+                WeakConstraint(
+                    (PredLiteral("p", Variable("X")), PredLiteral("q", Number(0))),
+                    WeightAtLevel(Number(1), Number(1), (Number(-1), Number(2))),
+                ),
+                possible={
+                    PredLiteral("p", Number(0)),
+                    PredLiteral("q", Number(0)),
+                },
+            ) == {
+                WeakConstraint(
+                    (PredLiteral("p", Number(0)), PredLiteral("q", Number(0))),
+                    WeightAtLevel(Number(1), Number(1), (Number(-1), Number(2))),
+                ),
+            }  # all literals have matches in 'possible'
+        assert Grounder.ground_statement(
+                WeakConstraint(
+                    (PredLiteral("p", Variable("X")), PredLiteral("q", Number(0))),
+                    WeightAtLevel(Number(1), Number(1), (Number(-1), Number(2))),
+                ),
+                possible={PredLiteral("q", Number(1))},
+            ) == set()  # not all literals have matches in 'possible'
 
         # TODO: aggregates
 
